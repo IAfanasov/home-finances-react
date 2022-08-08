@@ -1,6 +1,7 @@
 import { AbnCsvRow } from "./model";
 import * as Papa from 'papaparse';
-import { ExpenseCategory, GSExpenseOrIncomeCsvRow, IncomeCategory } from "../model";
+import { GSExpenseOrIncomeCsvRow } from "../model";
+import { getCategory } from "../shared/category-utils";
 
 export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] } {
     console.log(`Processing ABN`);
@@ -21,7 +22,7 @@ export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvR
                     amount: Math.abs(amount),
                     currency: abnRecord.mutationcode,
                     account: 'ABN',
-                    category: getCategory(abnRecord),
+                    category: getCategory({amount, description: abnRecord.description}),
                     date: toDashedDate(abnRecord.transactiondate),
                     description: abnRecord.description,
                 };
@@ -40,7 +41,6 @@ export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvR
                 }
             }
         }
-        console.log({incomes})
         return {expenses, incomes, empty};
     } catch (err) {
         console.error(err);
@@ -61,42 +61,3 @@ function getAbnRecords(csvString: string): AbnCsvRow[] {
         }));
 }
 
-const categoriesMap: { token: string, category: ExpenseCategory }[] = [
-    {token: 'T-MOBILE NETHERLANDS', category: 'Интернет, связь'},
-    {token: 'T-MOBILE THUIS', category: 'Интернет, связь'},
-    {token: 'NS GROEP', category: 'Самолет\\поезд\\автобус'},
-    {token: 'ABN AMRO Bank N.V.               Basic Package', category: 'Банковские услуги'},
-    {token: 'PRIMARK', category: 'Одежда'},
-    {token: 'VITENS NV', category: 'Квартплата'},
-    {token: 'GBLT incasso maandelijkse', category: 'Квартплата'},
-    {token: 'GEMEENTE ALMERE BELASTINGEN ', category: 'Квартплата'},
-    {token: 'Vattenfall Klantenservice N.V.', category: 'Квартплата'},
-    {token: 'Zuyeva Elena', category: 'Dutch'},
-    {token: 'Smirnova Elena', category: 'Dutch'},
-    {token: 'Zorgverzekeringen', category: 'мед страховка'},
-    {token: 'Nationale-Nederlanden Zorg', category: 'мед страховка'},
-    {token: 'OnlinePets', category: 'Кошка'},
-    {token: 'Pharmapets.nl', category: 'Кошка'},
-    {token: 'NL21ZZZ330520730000', category: 'Кошка'},
-    {token: 'Kruidvat', category: 'Дом, семья'},
-    {token: 'Almere Polski Supermar', category: 'Продукты'},
-    {token: 'Sligro', category: 'Продукты'},
-    {token: 'VOLMACHTKANTOOR', category: 'Траты на жизнь'},
-    {token: 'Amazon EU SARL by Stripe', category: 'Развлечения'},
-]
-
-function getCategory(revolutCsvRow: AbnCsvRow): string | undefined {
-    let result: ExpenseCategory | IncomeCategory | undefined;
-    const amount = +revolutCsvRow.amount;
-    if (amount > 0) {
-        result = 'Возврат';
-    } else {
-        for (const entry of categoriesMap) {
-            if (revolutCsvRow.description.indexOf(entry.token) >= 0) {
-                result = entry.category;
-            }
-        }
-    }
-
-    return result;
-}

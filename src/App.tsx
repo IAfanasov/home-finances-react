@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import './App.css';
-import { GSExpenseOrIncomeCsvRow } from "./model";
+import { GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "./model";
 import { AbnCsvRow } from "./abn/model";
 import { processAbn } from "./abn/abn";
 import { IncomeOrExpenseSection } from "./income-or-expense-section/IncomeOrExpenseSection";
+import { processRevolut } from "./revolut/revolut";
 
 function App() {
     const initialState: {
         succeed: boolean,
         expenses: GSExpenseOrIncomeCsvRow[],
         incomes: GSExpenseOrIncomeCsvRow[],
-        empty: AbnCsvRow[],
+        empty: AbnCsvRow[] | RevolutCsvRow[],
         error: string
     } = {
         succeed: true,
@@ -23,7 +24,12 @@ function App() {
 
     async function processNewText(text: string) {
         try {
-            const result = processAbn(text);
+            let result : { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] | RevolutCsvRow[] };
+            if (text.split('\t').length > 3) {
+                result = processAbn(text);
+            } else {
+                result = processRevolut(text);
+            }
             setState({
                 succeed: true,
                 expenses: result.expenses,
@@ -59,7 +65,7 @@ function App() {
                 <IncomeOrExpenseSection title={"Incomes"} records={state.incomes}></IncomeOrExpenseSection>
             </div>
             <h5>Empty ({state.empty.length})</h5>
-            <pre className="p-3">{JSON.stringify(state.empty)}</pre>
+            <pre className="p-3">{JSON.stringify(state.empty, null, 4)}</pre>
         </div>
     );
 }

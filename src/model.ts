@@ -75,16 +75,16 @@ export interface ResultCsvRow {
 }
 
 export interface RevolutCsvRow {
-  Type: string;
-  Product: string;
-  "Started Date": string;
-  "Completed Date": string;
-  Description: string;
-  Amount: number;
-  Fee: number;
-  Currency: string;
-  State: string;
-  Balance: number;
+  recordType: string;
+  product: string;
+  startedDate: string;
+  completedDate: string;
+  description: string;
+  amount: string;
+  fee: string;
+  currency: string;
+  state: string;
+  balance: string;
 }
 
 export interface GSExpenseOrIncomeCsvRow {
