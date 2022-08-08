@@ -30,7 +30,6 @@ jobs:
     - run: npm ci
     - run: npm run build
 
-    - run: touch docs/.nojekyll
     - name: Deploy build 🚀
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
