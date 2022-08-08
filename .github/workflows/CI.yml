@@ -3,7 +3,7 @@ name: Lint and test
 on: [push, pull_request]
 
 jobs:
-  build_and_test:
+  CI:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -11,13 +11,10 @@ jobs:
         nodejs: [16]
 
     steps:
-    - uses: actions/checkout@v2
-
-    # https://github.com/actions/setup-node
+    - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.nodejs }}
 
     - run: npm ci
     - run: npm test
-    - run: npm lint
