@@ -17,6 +17,7 @@ on:
 
 jobs:
   deploy_pages:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +30,7 @@ jobs:
 
 #    - run: touch docs/.nojekyll
     - name: Deploy build 🚀
-      uses: JamesIves/github-pages-deploy-action@releases/v3
+      uses: peaceiris/actions-gh-pages@v3
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages # The branch the action should deploy to.
-        FOLDER: build # The folder the action should deploy.
+        publish_dir: ./build
