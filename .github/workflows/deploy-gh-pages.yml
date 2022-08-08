@@ -7,10 +7,13 @@ name: Deploy to Github pages
 
 on:
   push:
-    #tags:
-    #  - v*
     branches:
       - main
+  workflow_run:
+    workflows: ["Tests"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   deploy_pages:

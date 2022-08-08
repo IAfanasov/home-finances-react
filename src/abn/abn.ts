@@ -31,8 +31,8 @@ export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvR
                 } else {
                     // ''
                     //
-                    if (abnRecord.description.indexOf('hypotheek') >= 0 && abnRecord.description.indexOf('ABN AMRO BANK NV') >= 0
-                        || abnRecord.description.indexOf('ABN AMRO KREDIETEN BV') >= 0) {
+                    if ((abnRecord.description.indexOf('hypotheek') >= 0 && abnRecord.description.indexOf('ABN AMRO BANK NV') >= 0)
+                        || (abnRecord.description.indexOf('ABN AMRO KREDIETEN BV') >= 0)) {
                         // TODO transfer
                     } else {
                         expenses.push(gsRecord);

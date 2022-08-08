@@ -4,7 +4,6 @@ import { GSExpenseOrIncomeCsvRow } from "./model";
 import { AbnCsvRow } from "./abn/model";
 import { processAbn } from "./abn/abn";
 import { IncomeOrExpenseSection } from "./income-or-expense-section/IncomeOrExpenseSection";
-import * as Papa from "papaparse";
 
 function App() {
     const initialState: {
