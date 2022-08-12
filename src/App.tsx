@@ -10,15 +10,19 @@ function App() {
 
     return (
         <React.Fragment>
-            <MainNavigation></MainNavigation>
-            <Routes>
-                <Route path={RoutePath.root}
-                       element={<AddExpenseForm/>}/>
-                <Route path={RoutePath.csv}
-                       element={<CsvExportPage/>}/>
-                <Route path={RoutePath.addExpense}
-                       element={<AddExpenseForm/>}/>
-            </Routes>
+            <header>
+                <MainNavigation></MainNavigation>
+            </header>
+            <main className='p-3'>
+                <Routes>
+                    <Route path={RoutePath.root}
+                           element={<AddExpenseForm/>}/>
+                    <Route path={RoutePath.csv}
+                           element={<CsvExportPage/>}/>
+                    <Route path={RoutePath.addExpense}
+                           element={<AddExpenseForm/>}/>
+                </Routes>
+            </main>
         </React.Fragment>
     );
 }

@@ -12,7 +12,7 @@ function MainNavigation() {
                     </li>
                     <li>
                         <NavLink className="nav-link"
-                                 to={RoutePath.addExpense}>Add expense</NavLink>
+                                 to={RoutePath.root}>Add expense</NavLink>
                     </li>
                 </ul>
             </div>
