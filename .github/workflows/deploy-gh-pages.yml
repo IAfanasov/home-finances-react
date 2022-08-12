@@ -29,6 +29,8 @@ jobs:
         node-version: '16'
     - run: npm ci
     - run: npm run build
+      env:
+        REACT_APP_ROUTER_BASENAME: /home-finances-react
 
     - run: touch build/.nojekyll
     - name: Deploy build 🚀
