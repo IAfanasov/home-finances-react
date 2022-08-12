@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/home-finances-react/static/css/main.9e39d2eb.css",
-    "main.js": "/home-finances-react/static/js/main.8148aaa1.js",
+    "main.css": "/home-finances-react/static/css/main.3f792b96.css",
+    "main.js": "/home-finances-react/static/js/main.a7fa388e.js",
     "static/js/787.a14d865f.chunk.js": "/home-finances-react/static/js/787.a14d865f.chunk.js",
     "index.html": "/home-finances-react/index.html",
-    "main.9e39d2eb.css.map": "/home-finances-react/static/css/main.9e39d2eb.css.map",
-    "main.8148aaa1.js.map": "/home-finances-react/static/js/main.8148aaa1.js.map",
+    "main.3f792b96.css.map": "/home-finances-react/static/css/main.3f792b96.css.map",
+    "main.a7fa388e.js.map": "/home-finances-react/static/js/main.a7fa388e.js.map",
     "787.a14d865f.chunk.js.map": "/home-finances-react/static/js/787.a14d865f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9e39d2eb.css",
-    "static/js/main.8148aaa1.js"
+    "static/css/main.3f792b96.css",
+    "static/js/main.a7fa388e.js"
   ]
 }
