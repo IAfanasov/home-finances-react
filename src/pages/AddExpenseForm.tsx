@@ -1,30 +1,39 @@
+import { FormEvent, useState } from "react";
+import './AddExpenseForm.css';
+
 export function AddExpensePage() {
-    return <form className='col-xxl-3 col-xl-4 col-lg-5 col-md-6 col-sm-7 col-12'>
+    const [state, setState] = useState({wasValidate: false});
+
+    function onSubmit(event: FormEvent) {
+        setState({wasValidate: true});
+        console.log(event);
+    }
+
+    return <form className={(state.wasValidate ? 'was-validated' : 'needs-validation') + ' col-xxl-3 col-xl-4 col-lg-5 col-md-6 col-sm-7 col-12'}
+                 onSubmit={onSubmit}
+                 noValidate>
         <h3>Add an expense</h3>
 
         <div className='input-group mb-3'>
             <input type="number"
+                   min={0}
+                   step={0.01}
                    className="form-control"
+                   required
                    placeholder="Amount"/>
-            <button className="btn btn-outline-secondary dropdown-toggle"
-                    type="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">Dropdown
-            </button>
-            <ul className="dropdown-menu dropdown-menu-end">
-                <li><a className="dropdown-item"
-                       href="#">Action</a></li>
-                <li><a className="dropdown-item"
-                       href="#">Another action</a></li>
-                <li><a className="dropdown-item"
-                       href="#">Something else here</a></li>
-            </ul>
+            <select className="currency-select form-select flex-grow-0 flex-shrink-0">
+                <option>EUR</option>
+                <option>USD</option>
+                <option>RUB</option>
+            </select>
             <input type="date"
+                   required
                    className="form-control"
                    placeholder="Date"/>
         </div>
 
         <select defaultValue=''
+                required
                 className="form-select mb-3">
             <option value="">Category</option>
             <option value="1">One</option>
@@ -33,6 +42,7 @@ export function AddExpensePage() {
         </select>
 
         <select defaultValue=''
+                required
                 className="form-select mb-3">
             <option value="">Account</option>
             <option value="1">One</option>
@@ -48,7 +58,9 @@ export function AddExpensePage() {
                       rows={2}></textarea>
         </div>
 
-        <button className="btn btn-dark ms-auto d-block">Save</button>
+        <button type='submit'
+                className="btn btn-dark ms-auto d-block">Save
+        </button>
     </form>
 }
 
