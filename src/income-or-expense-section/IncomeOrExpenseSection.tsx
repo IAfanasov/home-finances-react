@@ -10,7 +10,7 @@ export function IncomeOrExpenseSection(props: { title: string, records: GSExpens
     }
 
     return <section>
-        <h5>{props.title} ({props.records.length})
+        <h5>{props.title} ({props.records.filter(x=>!x.category).length}/{props.records.length})
             <button type="button"
                     className="btn btn-primary btn-clipboard"
                     onClick={() => copyToClipboard(props.records)}

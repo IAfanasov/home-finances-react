@@ -11,6 +11,7 @@ const expenseCategoriesMap: { category: ExpenseCategory, tokens: string[] }[] = 
         category: 'Самолет\\поезд\\автобус',
         tokens: [
             'NS GROEP',
+            'Db Vertrieb',
         ],
     },
     {
@@ -21,6 +22,8 @@ const expenseCategoriesMap: { category: ExpenseCategory, tokens: string[] }[] = 
         category: 'Одежда',
         tokens: [
             'PRIMARK',
+            'New Yorker',
+            'Woolworth',
         ],
     },
     {
@@ -93,6 +96,9 @@ const expenseCategoriesMap: { category: ExpenseCategory, tokens: string[] }[] = 
             'Crowdfarming',
             'Schuur-Koop',
             'Spar City',
+            'Edeka',
+            'Rewe ',
+            'Rewe-',
         ],
     },
     {
@@ -101,6 +107,13 @@ const expenseCategoriesMap: { category: ExpenseCategory, tokens: string[] }[] = 
             'Visboer Albert',
             'Jonico', // Martino's ice cream
             'Bubbletea',
+            'Restaurant',
+            'Ristorante',
+            'Mcdonalds',
+            'Backwerk',
+            'Cafe',
+            'Baeckerei',
+            'brauhaus',
         ],
     },
     {
@@ -113,6 +126,17 @@ const expenseCategoriesMap: { category: ExpenseCategory, tokens: string[] }[] = 
         category: 'Развлечения',
         tokens: [
             'Amazon EU SARL by Stripe',
+            'Spotify',
+            'Playstation',
+        ],
+    },
+    {
+        category: 'Жилье',
+        tokens: [
+            'booking.com',
+            'Ibis',
+            'Premier Inn',
+            'Hostel',
         ],
     },
 ]
@@ -132,12 +156,12 @@ export function getCategory(revolutCsvRow: { amount: number, description: string
     const amount = revolutCsvRow.amount;
     if (amount > 0) {
         const found = incomeCategoryMap.find(entry =>
-            entry.tokens.some(token => revolutCsvRow.description.indexOf(token) >= 0)
+            entry.tokens.some(token => revolutCsvRow.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
         );
         result = found ? found.category : 'Возврат';
     } else {
         const found = expenseCategoriesMap.find(entry =>
-            entry.tokens.some(token => revolutCsvRow.description.indexOf(token) >= 0)
+            entry.tokens.some(token => revolutCsvRow.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
         );
         result = found?.category;
     }
