@@ -151,17 +151,17 @@ const incomeCategoryMap: { category: IncomeCategory, tokens: string[] }[] = [
 ]
 
 
-export function getCategory(revolutCsvRow: { amount: number, description: string }): string | undefined {
+export function getCategory(record: { amount: number, description: string }): string | undefined {
     let result: ExpenseCategory | IncomeCategory | undefined;
-    const amount = revolutCsvRow.amount;
+    const amount = record.amount;
     if (amount > 0) {
         const found = incomeCategoryMap.find(entry =>
-            entry.tokens.some(token => revolutCsvRow.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
+            entry.tokens.some(token => record.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
         );
         result = found ? found.category : 'Возврат';
     } else {
         const found = expenseCategoriesMap.find(entry =>
-            entry.tokens.some(token => revolutCsvRow.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
+            entry.tokens.some(token => record.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
         );
         result = found?.category;
     }

@@ -32,7 +32,7 @@ jobs:
       env:
         REACT_APP_ROUTER_BASENAME: /home-finances-react
         REACT_APP_SPREADSHEET_ID: 1yRqayCb6txRRWUYG2JBgeUPz55ewl1JTT2WWimCpJ-4
-        REACT_APP_EXPENSES_SHEET_ID: 566049814
+        REACT_APP_EXPENSES_SHEET_ID: 465594934
 
     - run: touch build/.nojekyll
     - name: Deploy build 🚀
