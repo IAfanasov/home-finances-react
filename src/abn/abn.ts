@@ -1,9 +1,9 @@
 import { AbnCsvRow } from "./model";
 import * as Papa from 'papaparse';
-import { GSExpenseOrIncomeCsvRow } from "../model";
+import { GSExpenseOrIncomeCsvRow, HomeFinanceData } from "../model";
 import { getCategory } from "../shared/category-utils";
 
-export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] } {
+export function processAbn(csvString: string, data: HomeFinanceData): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] } {
     console.log(`Processing ABN`);
     try {
         const records = getAbnRecords(csvString);
@@ -22,7 +22,7 @@ export function processAbn(csvString: string): { expenses: GSExpenseOrIncomeCsvR
                     amount: Math.abs(amount),
                     currency: abnRecord.mutationcode,
                     account: 'ABN',
-                    category: getCategory({amount, description: abnRecord.description}),
+                    category: getCategory({amount, description: abnRecord.description}, data),
                     date: toDashedDate(abnRecord.transactiondate),
                     description: abnRecord.description,
                 };

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "../model";
 import { AbnCsvRow } from "../abn/model";
 import { processAbn } from "../abn/abn";
 import { IncomeOrExpenseSection } from "../income-or-expense-section/IncomeOrExpenseSection";
 import { processRevolut } from "../revolut/revolut";
+import { HomeFinanceDataContext } from "../shared/data-context";
 
 function CsvExport() {
     const initialState: {
@@ -20,14 +21,15 @@ function CsvExport() {
         error: ''
     };
     const [state, setState] = useState(initialState);
+    const {data: homeFinanceData} = useContext(HomeFinanceDataContext);
 
     async function processNewText(text: string) {
         try {
-            let result : { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] | RevolutCsvRow[] };
+            let result: { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] | RevolutCsvRow[] };
             if (text.split('\t').length > 3) {
-                result = processAbn(text);
+                result = processAbn(text, homeFinanceData!);
             } else {
-                result = processRevolut(text);
+                result = processRevolut(text, homeFinanceData!);
             }
             setState({
                 succeed: true,
@@ -48,6 +50,7 @@ function CsvExport() {
     }
 
     return (
+        homeFinanceData &&
         <div className='p-3'>
             <textarea className="form-control mb-2"
                       rows={10}
@@ -60,8 +63,10 @@ function CsvExport() {
             }
 
             <div className='d-flex gap-5'>
-                <IncomeOrExpenseSection title={"Expenses"} records={state.expenses}></IncomeOrExpenseSection>
-                <IncomeOrExpenseSection title={"Incomes"} records={state.incomes}></IncomeOrExpenseSection>
+                <IncomeOrExpenseSection title={"Expenses"}
+                                        records={state.expenses}></IncomeOrExpenseSection>
+                <IncomeOrExpenseSection title={"Incomes"}
+                                        records={state.incomes}></IncomeOrExpenseSection>
             </div>
             <h5>Empty ({state.empty.length})</h5>
             <pre className="p-3">{JSON.stringify(state.empty, null, 4)}</pre>

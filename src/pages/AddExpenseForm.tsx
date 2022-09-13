@@ -156,7 +156,7 @@ export function AddExpensePage() {
                     className="form-select mb-3">
                 <option value="">Select a category</option>
                 {homeFinanceData.expenseCategories.map(category =>
-                    <option key={category}>{category}</option>
+                    <option key={category.name}>{category.name}</option>
                 )}
             </select>
 

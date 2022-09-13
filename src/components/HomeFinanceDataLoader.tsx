@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { HomeFinanceData } from "../model";
+import { CategoryData, HomeFinanceData } from "../model";
 
 function HomeFinanceDataLoader(props: { onDataLoaded: (data: HomeFinanceData) => void }) {
 
@@ -44,7 +44,7 @@ function HomeFinanceDataLoader(props: { onDataLoaded: (data: HomeFinanceData) =>
 
     async function loadData() {
 
-        async function loadArrayFromSpreadsheet(range: string): Promise<string[]> {
+        async function loadArrayFromSpreadsheet(range: string): Promise<string[][]> {
             console.info('loading range', range);
             let response: gapi.client.Response<gapi.client.sheets.ValueRange>;
             try {
@@ -61,20 +61,39 @@ function HomeFinanceDataLoader(props: { onDataLoaded: (data: HomeFinanceData) =>
                 console.error('No values found.');
                 return [];
             }
-            return result.values
+            return result.values;
+        }
+
+        function flatten(values: string[][]): string[] {
+            return values
                 .flat()
                 .filter(x => x)
                 .slice(1);
         }
 
+        function extractCategories(values: string[][]): CategoryData[] {
+            return values
+                .slice(1)
+                .filter(x => x[0])
+                .map(x => ({
+                    name: x[0],
+                    tokens: x[3] ? x[3].split('\n') : [],
+                }));
+        }
+
         const [currencies, incomeCategories, expenseCategories, accounts] = await Promise.all([
             loadArrayFromSpreadsheet('Currency!B:B'),
-            loadArrayFromSpreadsheet(`'Income category'!A:A`),
-            loadArrayFromSpreadsheet(`'Expense category'!A:A`),
+            loadArrayFromSpreadsheet(`'Income category'!A:D`),
+            loadArrayFromSpreadsheet(`'Expense category'!A:D`),
             loadArrayFromSpreadsheet(`Account!B:B`),
-        ])
+        ]);
 
-        props.onDataLoaded({currencies, incomeCategories, expenseCategories, accounts});
+        props.onDataLoaded({
+            currencies: flatten(currencies),
+            incomeCategories: extractCategories(incomeCategories),
+            expenseCategories: extractCategories(expenseCategories),
+            accounts: flatten(accounts),
+        });
     }
 
     return <Fragment/>;

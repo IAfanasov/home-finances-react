@@ -1,8 +1,8 @@
-import { GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "../model";
+import { GSExpenseOrIncomeCsvRow, HomeFinanceData, RevolutCsvRow } from "../model";
 import * as Papa from "papaparse";
 import { getCategory } from "../shared/category-utils";
 
-export function processRevolut(csvString: string): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: RevolutCsvRow[] } {
+export function processRevolut(csvString: string, data: HomeFinanceData): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: RevolutCsvRow[] } {
     console.log(`Processing revolut`);
     try {
         const records = getRevolutRecords(csvString);
@@ -20,7 +20,7 @@ export function processRevolut(csvString: string): { expenses: GSExpenseOrIncome
                     amount: Math.abs(amount),
                     currency: revolutRecord.currency,
                     account: 'Revolut',
-                    category: getCategory({amount, description}),
+                    category: getCategory({amount, description}, data),
                     date: revolutRecord.startedDate,
                     description,
                 };
