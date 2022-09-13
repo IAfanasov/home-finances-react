@@ -127,6 +127,14 @@ export function AddExpensePage() {
             <h3>Add an expense</h3>
 
             <div className='input-group mb-3'>
+                <input type="date"
+                       name={ExpenseFormField.date}
+                       required
+                       className="form-control"
+                       placeholder="Date"/>
+            </div>
+            
+            <div className='input-group mb-3'>
                 <input type="number"
                        min={0}
                        step={0.01}
@@ -140,11 +148,6 @@ export function AddExpensePage() {
                         <option key={currency}>{currency}</option>
                     )}
                 </select>
-                <input type="date"
-                       name={ExpenseFormField.date}
-                       required
-                       className="form-control"
-                       placeholder="Date"/>
             </div>
 
             <select defaultValue=''
