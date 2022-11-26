@@ -1,47 +1,47 @@
-import { AbnCsvRow } from "./model";
 import * as Papa from 'papaparse';
-import { GSExpenseOrIncomeCsvRow, HomeFinanceData } from "../model";
+import { BankStatementProcessingResult, GSExpenseOrIncomeCsvRow, HomeFinanceData } from "../model";
 import { getCategory } from "../shared/category-utils";
+import { AbnCsvRow } from "./model";
 
-export function processAbn(csvString: string, data: HomeFinanceData): { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] } {
+export function processAbn(csvString: string, data: HomeFinanceData): BankStatementProcessingResult<AbnCsvRow> {
     console.log(`Processing ABN`);
     try {
         const records = getAbnRecords(csvString);
         console.log(`Processing ${records.length} parsed records`);
-        console.log({records})
-        const incomes: GSExpenseOrIncomeCsvRow [] = [];
-        const empty: AbnCsvRow [] = [];
+        console.log({ records })
+        const incomes: GSExpenseOrIncomeCsvRow[] = [];
+        const empty: AbnCsvRow[] = [];
+        const manual: AbnCsvRow[] = [];
         const expenses: GSExpenseOrIncomeCsvRow[] = [];
         for (const abnRecord of records) {
             const amount = +abnRecord.amount.replace(',', '.');
+            const { description } = abnRecord;
+
+            if ((description.indexOf('hypotheek') >= 0 && description.indexOf('ABN AMRO BANK NV') >= 0)
+                || (description.indexOf('ABN AMRO KREDIETEN BV') >= 0)) {
+                manual.push(abnRecord);
+                continue;
+            }
             if (amount === 0) {
                 empty.push(abnRecord);
             } else {
-
                 const gsRecord: GSExpenseOrIncomeCsvRow = {
                     amount: Math.abs(amount),
                     currency: abnRecord.mutationcode,
                     account: 'ABN',
-                    category: getCategory({amount, description: abnRecord.description}, data),
+                    category: getCategory({ amount, description }, data),
                     date: toDashedDate(abnRecord.transactiondate),
-                    description: abnRecord.description,
+                    description,
                 };
 
                 if (amount > 0) {
                     incomes.push(gsRecord);
                 } else {
-                    // ''
-                    //
-                    if ((abnRecord.description.indexOf('hypotheek') >= 0 && abnRecord.description.indexOf('ABN AMRO BANK NV') >= 0)
-                        || (abnRecord.description.indexOf('ABN AMRO KREDIETEN BV') >= 0)) {
-                        // TODO transfer
-                    } else {
-                        expenses.push(gsRecord);
-                    }
+                    expenses.push(gsRecord);
                 }
             }
         }
-        return {expenses, incomes, empty};
+        return { expenses, incomes, empty, manual };
     } catch (err) {
         console.error(err);
         throw err;
@@ -60,4 +60,3 @@ function getAbnRecords(csvString: string): AbnCsvRow[] {
             accountNumber, mutationcode, transactiondate, startsaldo, endsaldo, valuedate, amount, description
         }));
 }
-

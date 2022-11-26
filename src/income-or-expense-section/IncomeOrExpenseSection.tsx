@@ -26,8 +26,8 @@ export function IncomeOrExpenseSection(props: { title: string, records: GSExpens
             </tr>
             </thead>
             <tbody>
-            {props.records.map((record) =>
-                <tr className={record.category ? '' : 'table-warning'}>
+            {props.records.map((record, index) =>
+                <tr key={index} className={record.category ? '' : 'table-warning'}>
                     <td>{record.account}</td>
                     <td>
                         <p className='fs-4 text-nowrap m-0'>{record.category}</p>

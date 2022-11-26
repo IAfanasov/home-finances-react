@@ -107,3 +107,10 @@ export interface CategoryData {
     name: string;
     tokens: string[];
 }
+
+export interface BankStatementProcessingResult<TCSVRow> {
+    expenses: GSExpenseOrIncomeCsvRow[];
+    incomes: GSExpenseOrIncomeCsvRow[];
+    empty: TCSVRow[];
+    manual: TCSVRow[];
+}

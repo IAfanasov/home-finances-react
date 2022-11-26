@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react';
-import { GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "../model";
+import React, { useContext, useEffect, useState } from 'react';
+import { BankStatementProcessingResult, GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "../model";
 import { AbnCsvRow } from "../abn/model";
 import { processAbn } from "../abn/abn";
 import { IncomeOrExpenseSection } from "../income-or-expense-section/IncomeOrExpenseSection";
@@ -7,67 +7,63 @@ import { processRevolut } from "../revolut/revolut";
 import { HomeFinanceDataContext } from "../shared/data-context";
 
 function CsvExport() {
-    const initialState: {
-        succeed: boolean,
-        expenses: GSExpenseOrIncomeCsvRow[],
-        incomes: GSExpenseOrIncomeCsvRow[],
-        empty: AbnCsvRow[] | RevolutCsvRow[],
-        error: string
-    } = {
-        succeed: true,
+    const initialState: BankStatementProcessingResult<AbnCsvRow | RevolutCsvRow> = {
         expenses: [],
         incomes: [],
         empty: [],
-        error: ''
+        manual: [],
     };
+    const [isSucceed, setIsSucceed] = useState(true);
+    const [parseError, setParseError] = useState(null);
     const [state, setState] = useState(initialState);
-    const {data: homeFinanceData} = useContext(HomeFinanceDataContext);
+    const [rawText, setRawText] = useState('');
+    const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
 
-    async function processNewText(text: string) {
-        try {
-            let result: { expenses: GSExpenseOrIncomeCsvRow[], incomes: GSExpenseOrIncomeCsvRow[], empty: AbnCsvRow[] | RevolutCsvRow[] };
-            if (text.split('\t').length > 3) {
-                result = processAbn(text, homeFinanceData!);
-            } else {
-                result = processRevolut(text, homeFinanceData!);
+    useEffect(() => {
+        async function processNewText() {
+            try {
+                let result: BankStatementProcessingResult<AbnCsvRow | RevolutCsvRow>;
+                if (rawText.split('\t').length > 3) {
+                    result = processAbn(rawText, homeFinanceData!);
+                } else {
+                    result = processRevolut(rawText, homeFinanceData!);
+                }
+                setIsSucceed(true);
+                setParseError(null);
+                setState({
+                    expenses: result.expenses,
+                    incomes: result.incomes,
+                    empty: result.empty,
+                    manual: result.manual,
+                });
+            } catch (err: any) {
+                setIsSucceed(false);
+                setParseError(err?.toString());
             }
-            setState({
-                succeed: true,
-                expenses: result.expenses,
-                incomes: result.incomes,
-                empty: result.empty,
-                error: ''
-            });
-        } catch (err: any) {
-            setState({
-                succeed: false,
-                expenses: state.expenses,
-                incomes: state.incomes,
-                empty: state.empty,
-                error: err?.toString(),
-            });
         }
-    }
+        processNewText();
+    }, [rawText, homeFinanceData, setState, setIsSucceed, setParseError]);
 
     return (
-        homeFinanceData &&
         <div className='p-3'>
             <textarea className="form-control mb-2"
-                      rows={10}
-                      onChange={newVal => processNewText(newVal.target.value)}></textarea>
+                rows={10}
+                onChange={newVal => setRawText(newVal.target.value)}></textarea>
 
             {
-                state.succeed
+                isSucceed
                     ? <div><i className="bi bi-check-circle text-success"></i> Success</div>
-                    : <div><i className="bi bi-x-circle text-danger pr-1"></i> {state.error}</div>
+                    : <div><i className="bi bi-x-circle text-danger pr-1"></i> {parseError}</div>
             }
 
             <div className='d-flex gap-5'>
                 <IncomeOrExpenseSection title={"Expenses"}
-                                        records={state.expenses}></IncomeOrExpenseSection>
+                    records={state.expenses}></IncomeOrExpenseSection>
                 <IncomeOrExpenseSection title={"Incomes"}
-                                        records={state.incomes}></IncomeOrExpenseSection>
+                    records={state.incomes}></IncomeOrExpenseSection>
             </div>
+            <h5>Manual ({state.manual.length})</h5>
+            <pre className="p-3">{JSON.stringify(state.manual, null, 4)}</pre>
             <h5>Empty ({state.empty.length})</h5>
             <pre className="p-3">{JSON.stringify(state.empty, null, 4)}</pre>
         </div>
