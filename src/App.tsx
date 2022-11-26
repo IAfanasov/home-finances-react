@@ -7,28 +7,18 @@ import { RoutePath } from './route-path.enum';
 import { MainNavigation } from './components/MainNavigation';
 import { HomeFinanceData } from './model';
 import { HomeFinanceDataContext } from './shared/data-context';
-import { useLoadHomeFinanceData } from './components/HomeFinanceDataLoader';
+import { useLoadHomeFinanceData } from './google-sheets/useLoadHomeFinanceData';
 
 function App() {
-    const defaultState: Partial<{
-        data: HomeFinanceData | null;
-    }> = {
-        data: null,
-    };
-    const [state, setState] = useState(defaultState);
-    const onDataLoaded = useCallback((data: HomeFinanceData) => setState({ data }), [setState]);
+    const [homeFinanceData, setHomeFinanceData] = useState<HomeFinanceData | null>(null);
+    const onDataLoaded = useCallback((data: HomeFinanceData) => setHomeFinanceData(data), [setHomeFinanceData]);
     const loadData = useLoadHomeFinanceData({ onDataLoaded });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => loadData, []);
 
     return (
-        <HomeFinanceDataContext.Provider
-            value={
-                state as {
-                    data: HomeFinanceData | null;
-                }
-            }
-        >
+        homeFinanceData ?
+        <HomeFinanceDataContext.Provider value={{ data: homeFinanceData }}        >
             <header>
                 <MainNavigation />
                 <button
@@ -46,7 +36,8 @@ function App() {
                     <Route path={RoutePath.addExpense} element={<AddExpenseForm />} />
                 </Routes>
             </main>
-        </HomeFinanceDataContext.Provider>
+        </HomeFinanceDataContext.Provider >
+        : <i className="bi bi-hourglass-split"></i>
     );
 }
 
