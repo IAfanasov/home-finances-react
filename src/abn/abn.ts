@@ -18,7 +18,10 @@ export function processAbn(csvString: string, data: HomeFinanceData): BankStatem
             const { description } = abnRecord;
 
             if ((description.indexOf('hypotheek') >= 0 && description.indexOf('ABN AMRO BANK NV') >= 0)
-                || (description.indexOf('ABN AMRO KREDIETEN BV') >= 0)) {
+                || (description.indexOf('ABN AMRO KREDIETEN BV') >= 0)
+                || (description.indexOf('Geldmaat') >= 0)
+                || (description.indexOf('LT913250033728930193') >= 0)
+            ) {
                 manual.push(abnRecord);
                 continue;
             }
