@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { BankStatementProcessingResult, GSExpenseOrIncomeCsvRow, RevolutCsvRow } from "../model";
-import { AbnCsvRow } from "../abn/model";
+import { useContext, useEffect, useState } from 'react';
 import { processAbn } from "../abn/abn";
+import { AbnCsvRow } from "../abn/model";
 import { IncomeOrExpenseSection } from "../income-or-expense-section/IncomeOrExpenseSection";
+import { BankStatementProcessingResult, RevolutCsvRow } from "../model";
 import { processRevolut } from "../revolut/revolut";
 import { HomeFinanceDataContext } from "../shared/data-context";
 

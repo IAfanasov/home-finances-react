@@ -18,6 +18,7 @@ function App() {
     const [state, setState] = useState(defaultState);
     const onDataLoaded = useCallback((data: HomeFinanceData) => setState({ data }), [setState]);
     const loadData = useLoadHomeFinanceData({ onDataLoaded });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => loadData, []);
 
     return (
