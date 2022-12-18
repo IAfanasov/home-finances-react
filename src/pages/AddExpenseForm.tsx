@@ -50,7 +50,7 @@ export function AddExpensePage() {
             [
                 ExpenseFormField.amount,
                 ExpenseFormField.comment,
-            ].forEach(x => (form.querySelector(`[name=${x}]`) as HTMLFormElement).value = '');
+            ].forEach(x => (form.elements.namedItem(x) as HTMLFormElement).value = '');
         } catch (error) {
             console.error(error);
             alert(JSON.stringify(error));
