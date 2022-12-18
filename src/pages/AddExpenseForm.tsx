@@ -45,7 +45,12 @@ export function AddExpensePage() {
         try {
             await appendExpences(values);
             setWasValidated(false);
-            (event.target as HTMLFormElement).reset();
+            const form = (event.target as HTMLFormElement);
+
+            [
+                ExpenseFormField.amount,
+                ExpenseFormField.comment,
+            ].forEach(x => (form.querySelector(`[name=${x}]`) as HTMLFormElement).value = '');
         } catch (error) {
             console.error(error);
             alert(JSON.stringify(error));
