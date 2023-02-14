@@ -104,6 +104,7 @@ export interface HomeFinanceData {
 }
 
 export interface CategoryData {
+    synonyms: string[];
     name: string;
     tokens: string[];
 }

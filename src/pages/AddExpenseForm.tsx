@@ -1,7 +1,12 @@
-import { FormEvent, useCallback, useContext, useState } from "react";
-import './AddExpenseForm.css';
-import { HomeFinanceDataContext } from "../shared/data-context";
+import { parse } from 'date-fns';
+import { getApp } from 'firebase/app';
+import { collection, doc, Firestore, getDocs, getFirestore, setDoc, writeBatch } from 'firebase/firestore';
+import { Dispatch, FormEvent, SetStateAction, useCallback, useContext, useState } from "react";
 import { appendExpences } from '../google-sheets/appendExpences';
+import { importExpenses } from '../migration/migrations';
+import { Collections } from '../shared/constants';
+import { HomeFinanceDataContext } from "../shared/data-context";
+import './AddExpenseForm.css';
 
 
 enum ExpenseFormField {
@@ -19,6 +24,8 @@ export function AddExpensePage() {
     const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    const app = getApp();
+    const db = getFirestore(app);
 
     const onSubmit = useCallback(async function onSubmit(event: FormEvent) {
         event.preventDefault();
@@ -30,34 +37,16 @@ export function AddExpensePage() {
         }
         const formData = new FormData(formElem);
 
-        const values = [
-            [
-                ExpenseFormField.amount,
-                ExpenseFormField.currency,
-                ExpenseFormField.account,
-                ExpenseFormField.category,
-                ExpenseFormField.date,
-                ExpenseFormField.comment,
-            ].map(x => formData.get(x) as string)
-        ];
+        await importExpenses(db, homeFinanceData, setSubmitting);
 
-        setSubmitting(true);
-        try {
-            await appendExpences(values);
-            setWasValidated(false);
-            const form = (event.target as HTMLFormElement);
+        // setWasValidated(false);
+        // const form = (event.target as HTMLFormElement);
 
-            [
-                ExpenseFormField.amount,
-                ExpenseFormField.comment,
-            ].forEach(x => (form.elements.namedItem(x) as HTMLFormElement).value = '');
-        } catch (error) {
-            console.error(error);
-            alert(JSON.stringify(error));
-        } finally {
-            setSubmitting(false);
-        }
-    }, [setWasValidated, setSubmitting])
+        // [
+        //     ExpenseFormField.amount,
+        //     ExpenseFormField.comment,
+        // ].forEach(x => (form.elements.namedItem(x) as HTMLFormElement).value = '');
+    }, [setWasValidated, setSubmitting, homeFinanceData])
 
 
     return <form className={(wasValidate ? 'was-validated' : 'needs-validation') + ' col-xxl-3 col-xl-4 col-lg-5 col-md-6 col-sm-7 col-12'}
@@ -131,3 +120,57 @@ export function AddExpensePage() {
 }
 
 export default AddExpensePage;
+
+async function copyCollection(db: Firestore, srcCollectionName: string, destCollectionName: string) {
+    const batch = writeBatch(db);
+
+    const sourceDocs = await getDocs(collection(db, srcCollectionName));
+    sourceDocs.docs.forEach(d => {
+        batch.set(doc(db, destCollectionName, d.id), d.data());
+    })
+    await batch.commit();
+}
+async function saveToGoogleSheets(formData: FormData, setSubmitting: { (value: SetStateAction<boolean>): void; (arg0: boolean): void; }) {
+    const values = [
+        [
+            ExpenseFormField.amount,
+            ExpenseFormField.currency,
+            ExpenseFormField.account,
+            ExpenseFormField.category,
+            ExpenseFormField.date,
+            ExpenseFormField.comment,
+        ].map(x => formData.get(x) as string)
+    ];
+
+    setSubmitting(true);
+    try {
+        await appendExpences(values);
+    } catch (error) {
+        console.error(error);
+        alert(JSON.stringify(error));
+    } finally {
+        setSubmitting(false);
+    }
+}
+async function saveToFirebase(formData: FormData, setSubmitting: Dispatch<SetStateAction<boolean>>) {
+
+    const app = getApp();
+    const db = getFirestore(app);
+
+    const expencesColRef = collection(db, Collections.expences);
+    const accountColRef = collection(db, Collections.accounts);
+    const expenseCategoriesColRef = collection(db, Collections.expence_categories);
+
+    const body = {
+        [ExpenseFormField.amount]: formData.get(ExpenseFormField.amount),
+        [ExpenseFormField.currency]: formData.get(ExpenseFormField.currency),
+        [ExpenseFormField.account]: doc(accountColRef, formData.get(ExpenseFormField.account) as string),
+        [ExpenseFormField.category]: doc(expenseCategoriesColRef, formData.get(ExpenseFormField.category) as string),
+        [ExpenseFormField.date]: parse(formData.get(ExpenseFormField.date) as string, 'yyyy-MM-dd', new Date()),
+        [ExpenseFormField.comment]: formData.get(ExpenseFormField.comment),
+    };
+
+    await setDoc(doc(expencesColRef), body);
+}
+
+

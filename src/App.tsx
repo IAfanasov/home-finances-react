@@ -1,44 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { FirebaseOptions, initializeApp } from 'firebase/app';
+import { memo } from 'react';
 import './App.css';
-import { Route, Routes } from 'react-router-dom';
-import AddExpenseForm from './pages/AddExpenseForm';
-import CsvExportPage from './pages/CsvExportPage';
-import { RoutePath } from './route-path.enum';
-import { MainNavigation } from './components/MainNavigation';
-import { HomeFinanceData } from './model';
-import { HomeFinanceDataContext } from './shared/data-context';
-import { useLoadHomeFinanceData } from './google-sheets/useLoadHomeFinanceData';
+import { FirebaseAuthProvider } from './auth/Auth';
+import { Root } from './components/Root';
 
-function App() {
-    const [homeFinanceData, setHomeFinanceData] = useState<HomeFinanceData | null>(null);
-    const onDataLoaded = useCallback((data: HomeFinanceData) => setHomeFinanceData(data), [setHomeFinanceData]);
-    const loadData = useLoadHomeFinanceData({ onDataLoaded });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => loadData(), []);
+const firebaseConfig: FirebaseOptions = {
+    apiKey: "AIzaSyBTA-hUQB5p_iI9dNf2Z823PzBhoeyG7Hw",
+    authDomain: "homefinance-c385b.firebaseapp.com",
+    projectId: "homefinance-c385b",
+    storageBucket: "homefinance-c385b.appspot.com",
+    messagingSenderId: "701998758589",
+    appId: "1:701998758589:web:ffc616ad43c639689115d4",
+    measurementId: "G-K72K3SXL5F"
+};
+export const App = memo(() => {
 
-    return (
-        homeFinanceData ?
-        <HomeFinanceDataContext.Provider value={{ data: homeFinanceData }}        >
-            <header>
-                <MainNavigation />
-                <button
-                    type="button"
-                    className="btn btn-light"
-                    onClick={loadData}
-                >
-                    <i className="bi bi-arrow-clockwise"></i>
-                </button>
-            </header>
-            <main className="p-3">
-                <Routes>
-                    <Route path={RoutePath.root} element={<AddExpenseForm />} />
-                    <Route path={RoutePath.csv} element={<CsvExportPage />} />
-                    <Route path={RoutePath.addExpense} element={<AddExpenseForm />} />
-                </Routes>
-            </main>
-        </HomeFinanceDataContext.Provider >
-        : <i className="bi bi-hourglass-split"></i>
-    );
-}
 
-export default App;
+    initializeApp(firebaseConfig)
+
+    return <FirebaseAuthProvider> <Root /></FirebaseAuthProvider>;
+})
