@@ -70,6 +70,7 @@ export function AddExpensePage() {
             <input type="date"
                 name={ExpenseFormField.date}
                 required
+                value={new Date().toISOString().split('T')[0]}
                 className="form-control"
                 placeholder="Date"
                 defaultValue={todayStr} />
@@ -85,8 +86,8 @@ export function AddExpensePage() {
                 placeholder="Amount" />
             <select className="currency-select form-select flex-grow-0 flex-shrink-0"
                 name={ExpenseFormField.currency}>
-                {homeFinanceData!.currencies.map(currency =>
-                    <option key={currency}>{currency}</option>
+                {homeFinanceData!.currencies.sort().map(currency =>
+                    <option key={currency} selected={currency==='EUR'}>{currency}</option>
                 )}
             </select>
         </div>

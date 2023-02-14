@@ -63,7 +63,7 @@ export function processRevolut(
 
 function getRevolutRecords(csvString: string): RevolutCsvRow[] {
     return Papa.parse<string[]>(csvString)
-        .data.filter((row) => row[0])
+        .data.filter((row) => row[0] && 'Type'!==row[0])
         .map(
             ([
                 recordType,

@@ -6,9 +6,10 @@ interface UseLoadHomeFinanceDataArgs {
 }
 export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataArgs) {
   return useCallback(() => {
-    const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+    const DISCOVERY_DOC_SHEETS = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+    const DISCOVERY_DOC_DRIVE = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
 
-    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+    const SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
 
     gapi.load('client', intializeGapiClient);
 
@@ -16,7 +17,7 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
       gapi.client
         .init({
           apiKey: process.env.REACT_APP_API_KEY,
-          discoveryDocs: [DISCOVERY_DOC],
+          discoveryDocs: [DISCOVERY_DOC_SHEETS, DISCOVERY_DOC_DRIVE],
         })
         .then(
           async () => {

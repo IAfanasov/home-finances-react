@@ -1,13 +1,11 @@
-import React, { useState } from "react";
-import { GSExpenseOrIncomeCsvRow } from "../model";
 import * as Papa from "papaparse";
+import { useState } from "react";
 import { appendExpences } from '../google-sheets/appendExpences';
+import { GSExpenseOrIncomeCsvRow } from "../model";
 
 export function IncomeOrExpenseSection(props: { title: string, records: GSExpenseOrIncomeCsvRow[] }) {
 
     const [isProcessing, setIsProcessing] = useState(false);
-    const [total, setTotal] = useState(0);
-    const [processing, setProcessing] = useState(0);
 
     function copyToClipboard(records: GSExpenseOrIncomeCsvRow[]) {
         const csvString = Papa.unparse(records, { header: false, skipEmptyLines: true, delimiter: ',' });
@@ -16,28 +14,32 @@ export function IncomeOrExpenseSection(props: { title: string, records: GSExpens
 
     async function copyToGS(records: GSExpenseOrIncomeCsvRow[]) {
         setIsProcessing(true);
-        setProcessing(0);
-        setTotal(records.length);
+        const rows = [];
         for (const { amount, currency, account, category, date, description } of records) {
-            setProcessing((prev) => prev + 1);
-            const row = [`${amount}`, currency, account, category || '', date, description || ''];
-            await appendExpences([row]);
+            rows.push([`${amount}`, currency, account, category || '', date, description || '']);
         };
-        setIsProcessing(false);
+        try {
+            await appendExpences(rows);
+        } finally {
+            setIsProcessing(false);
+        }
     }
 
     return <section>
-        {isProcessing && <h5>Processing {processing} out of {total}</h5>}
-        <h5>{props.title} ({props.records.filter(x => !x.category).length}/{props.records.length})
-            <button type="button"
-                className="btn btn-primary btn-clipboard"
-                onClick={() => copyToClipboard(props.records)}
-                data-bs-original-title="Copy to clipboard">Copy</button>
-            <button type="button"
-                className="btn btn-primary btn-clipboard"
-                onClick={() => copyToGS(props.records)}
-                data-bs-original-title="Move records to google sheets">To GS</button>
-        </h5>
+        {isProcessing
+            ? <h5>Processing...</h5>
+            : <h5>{props.title} ({props.records.filter(x => !x.category).length}/{props.records.length})
+                <button type="button"
+                    className="btn btn-primary btn-clipboard"
+                    onClick={() => copyToClipboard(props.records)}
+                    data-bs-original-title="Copy to clipboard">Copy</button>
+                <button type="button"
+                    className="btn btn-primary btn-clipboard"
+                    disabled={isProcessing}
+                    onClick={() => copyToGS(props.records)}
+                    data-bs-original-title="Move records to google sheets">To GS</button>
+            </h5>
+        }
         <table className="table record-table">
             <thead>
                 <tr>
