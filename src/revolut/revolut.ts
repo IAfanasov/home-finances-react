@@ -39,6 +39,18 @@ export function processRevolut(
                     date: revolutRecord.startedDate,
                     description,
                 };
+                const fee = +revolutRecord.fee;
+                if (fee) {
+                    const gsFeeRecord: GSExpenseOrIncomeCsvRow = {
+                        amount: fee,
+                        currency: revolutRecord.currency,
+                        account: 'Revolut',
+                        category: 'Банковские услуги',
+                        date: revolutRecord.startedDate,
+                        description: `Fee for ${description}`,
+                    };
+                    expenses.push(gsFeeRecord);
+                }
 
                 if (amount > 0) {
                     if (
