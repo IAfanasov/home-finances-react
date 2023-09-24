@@ -45,7 +45,7 @@ export function processRevolut(
                         amount: fee,
                         currency: revolutRecord.currency,
                         account: 'Revolut',
-                        category: 'Банковские услуги',
+                        category: 'Bank service',
                         date: revolutRecord.startedDate,
                         description: `Fee for ${description}`,
                     };

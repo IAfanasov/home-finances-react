@@ -8,7 +8,7 @@ export function getCategory(record: { amount: number, description: string }, dat
         const found = data.incomeCategories.find(entry =>
             entry.tokens.some(token => record.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)
         );
-        result = found ? found.name : 'Возврат';
+        result = found ? found.name : 'Refund';
     } else {
         const found = data.expenseCategories.find(entry =>
             entry.tokens.some(token => record.description.toLowerCase().indexOf(token.toLowerCase()) >= 0)

@@ -70,7 +70,6 @@ export function AddExpensePage() {
             <input type="date"
                 name={ExpenseFormField.date}
                 required
-                value={new Date().toISOString().split('T')[0]}
                 className="form-control"
                 placeholder="Date"
                 defaultValue={todayStr} />
