@@ -1,9 +1,8 @@
 import * as Papa from "papaparse";
 import { useState } from "react";
-import { appendExpences } from '../google-sheets/appendExpences';
 import { GSExpenseOrIncomeCsvRow } from "../model";
 
-export function IncomeOrExpenseSection(props: { title: string, records: GSExpenseOrIncomeCsvRow[] }) {
+export function IncomeOrExpenseSection(props: { title: string, records: GSExpenseOrIncomeCsvRow[], onCopy: (rows: string[][])=> Promise<any> }) {
 
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -19,7 +18,7 @@ export function IncomeOrExpenseSection(props: { title: string, records: GSExpens
             rows.push([`${amount}`, currency, account, category || '', date, description || '']);
         };
         try {
-            await appendExpences(rows);
+            await props.onCopy(rows);
         } finally {
             setIsProcessing(false);
         }

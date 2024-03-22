@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useContext, useState } from "react";
-import './AddExpenseForm.css';
+import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
 import { HomeFinanceDataContext } from "../shared/data-context";
-import { appendExpences } from '../google-sheets/appendExpences';
+import './AddExpenseForm.css';
 
 
 enum ExpenseFormField {
@@ -43,7 +43,7 @@ export function AddExpensePage() {
 
         setSubmitting(true);
         try {
-            await appendExpences(values);
+            await appendExpensesOrIncome(values, process.env.REACT_APP_EXPENSES_SHEET_ID!, 'expense');
             setWasValidated(false);
             const form = (event.target as HTMLFormElement);
 
@@ -84,9 +84,9 @@ export function AddExpensePage() {
                 name={ExpenseFormField.amount}
                 placeholder="Amount" />
             <select className="currency-select form-select flex-grow-0 flex-shrink-0"
-                name={ExpenseFormField.currency}>
+                name={ExpenseFormField.currency} defaultValue='EUR'>
                 {homeFinanceData!.currencies.sort().map(currency =>
-                    <option key={currency} selected={currency==='EUR'}>{currency}</option>
+                    <option key={currency}>{currency}</option>
                 )}
             </select>
         </div>

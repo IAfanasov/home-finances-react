@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { processAbn } from "../abn/abn";
 import { AbnCsvRow } from "../abn/model";
+import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
 import { IncomeOrExpenseSection } from "../income-or-expense-section/IncomeOrExpenseSection";
 import { BankStatementProcessingResult, RevolutCsvRow } from "../model";
 import { processRevolut } from "../revolut/revolut";
@@ -58,9 +59,13 @@ function CsvExport() {
 
             <div className='d-flex gap-5'>
                 <IncomeOrExpenseSection title={"Expenses"}
-                    records={state.expenses}></IncomeOrExpenseSection>
+                    records={state.expenses}
+                    onCopy={rows => appendExpensesOrIncome(rows,  process.env.REACT_APP_EXPENSES_SHEET_ID, 'expense')}
+                    />
                 <IncomeOrExpenseSection title={"Incomes"}
-                    records={state.incomes}></IncomeOrExpenseSection>
+                    records={state.incomes}
+                    onCopy={rows => appendExpensesOrIncome(rows,  process.env.REACT_APP_INCOME_SHEET_ID, 'Income')}
+                    />
             </div>
             <h5>Manual ({state.manual.length})</h5>
             <pre className="p-3">{JSON.stringify(state.manual, null, 4)}</pre>
