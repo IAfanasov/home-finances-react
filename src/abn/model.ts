@@ -1,4 +1,5 @@
 export interface AbnCsvRow {
+  rowIndex: number;
   accountNumber: string;
   mutationcode: string;
   transactiondate: string;
