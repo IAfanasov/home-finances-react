@@ -16,18 +16,17 @@ on:
       - completed
 
 jobs:
-  build:
+  deploy_pages:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: '20'
-
+        node-version: '16'
     - run: npm ci
     - run: npm run build
       env:
@@ -37,10 +36,9 @@ jobs:
         REACT_APP_INCOME_SHEET_ID: 1527825823
 
     - run: touch build/.nojekyll
-
     - name: Deploy build 🚀
-      uses: JamesIves/github-pages-deploy-action@v4
+      uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
-        token: ${{ secrets.PAGES_DEPLOY_GITHUB_TOKEN }}
-        branch: gh-pages # The branch the action should deploy to.
-        folder: build # The folder the action should deploy.
+        GITHUB_TOKEN: ${{ secrets.PAGES_DEPLOY_GITHUB_TOKEN }}
+        BRANCH: gh-pages # The branch the action should deploy to.
+        FOLDER: build # The folder the action should deploy.
