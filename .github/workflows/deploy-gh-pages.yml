@@ -27,7 +27,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: '20'
-        
+
     - run: npm ci
     - run: npm run build
       env:
@@ -37,6 +37,7 @@ jobs:
         REACT_APP_INCOME_SHEET_ID: 1527825823
 
     - run: touch build/.nojekyll
+    
     - name: Deploy build 🚀
       uses: JamesIves/github-pages-deploy-action@v4
       with:
