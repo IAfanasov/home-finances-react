@@ -35,7 +35,7 @@ jobs:
         REACT_APP_EXPENSES_SHEET_ID: 465594934
         REACT_APP_INCOME_SHEET_ID: 1527825823
 
-    # - run: touch build/.nojekyll
+    - run: touch build/.nojekyll
     - name: Deploy build 🚀
       uses: JamesIves/github-pages-deploy-action@v4
       with:
