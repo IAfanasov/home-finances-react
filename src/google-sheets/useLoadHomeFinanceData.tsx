@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { CategoryData, HomeFinanceData } from '../model';
+import { CategoryData, HomeFinanceData, ResultCsvRow } from '../model';
 
 interface UseLoadHomeFinanceDataArgs {
   onDataLoaded: (data: HomeFinanceData) => void;
@@ -89,11 +89,24 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
           }));
       }
 
-      const [currencies, incomeCategories, expenseCategories, accounts] = await Promise.all([
+      function extractExpenseRecords(values: string[][]): ResultCsvRow[] {
+        return values
+          .map((x) => ({
+            date: x[4],
+            expensesAmount: Number(x[0]),
+            account: x[2],
+            category: x[3],
+            currency: x[1],
+            description: x[5],
+          }));
+      }
+
+      const [currencies, incomeCategories, expenseCategories, accounts, topExpenseRecords] = await Promise.all([
         loadArrayFromSpreadsheet('Currency!B:B'),
         loadArrayFromSpreadsheet(`'Income category'!A:D`),
         loadArrayFromSpreadsheet(`'Expense category'!A:D`),
         loadArrayFromSpreadsheet(`Account!B:B`),
+        loadArrayFromSpreadsheet(`expense!C2:H1001`),
       ]);
 
       onDataLoaded({
@@ -101,6 +114,7 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
         incomeCategories: extractCategories(incomeCategories),
         expenseCategories: extractCategories(expenseCategories),
         accounts: flatten(accounts),
+        topExpenseRecords: extractExpenseRecords(topExpenseRecords),
       });
     }
   }, [onDataLoaded]);

@@ -95,6 +95,7 @@ export interface GSExpenseOrIncomeCsvRow {
   date: string;
   description?: string;
   rowIndex: number;
+  duplicate?: boolean;
 }
 
 export interface HomeFinanceData {
@@ -102,6 +103,7 @@ export interface HomeFinanceData {
   incomeCategories: CategoryData[];
   expenseCategories: CategoryData[];
   accounts: string[];
+  topExpenseRecords: ResultCsvRow[];
 }
 
 export interface CategoryData {

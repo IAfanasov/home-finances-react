@@ -77,6 +77,18 @@ function CsvExport() {
     [setRawText],
   );
 
+  const deleteDuplicates = useCallback(() => {
+    const recordsToDelete = state.expenses
+      .filter((record) => record.duplicate)
+      .map((record) => record.rowIndex);
+    setRawText((prevVal) => {
+      return prevVal
+        .split('\n')
+        .filter((_, index) => !recordsToDelete.includes(index))
+        .join('\n');
+    });
+  }, [setRawText, state.expenses]);
+
   return (
     <div className="p-3">
       <textarea
@@ -85,6 +97,14 @@ function CsvExport() {
         value={rawText}
         onChange={(newVal) => setRawText(newVal.target.value)}
       ></textarea>
+
+      <button
+        type="button"
+        className="btn btn-primary mb-4"
+        onClick={deleteDuplicates}
+      >
+        Delete dups
+      </button>
 
       {isSucceed ? (
         <div>

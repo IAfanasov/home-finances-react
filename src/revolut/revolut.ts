@@ -1,10 +1,11 @@
+import * as Papa from 'papaparse';
 import {
   BankStatementProcessingResult,
   GSExpenseOrIncomeCsvRow,
   HomeFinanceData,
+  ResultCsvRow,
   RevolutCsvRow,
 } from '../model';
-import * as Papa from 'papaparse';
 import { getCategory } from '../shared/category-utils';
 
 export function processRevolut(
@@ -29,6 +30,13 @@ export function processRevolut(
         manual.push(revolutRecord);
         continue;
       }
+      if (
+        recordType === 'TRANSFER' ||
+        description.indexOf('Savings vault') >= 0
+      ) {
+        manual.push(revolutRecord);
+        continue;
+      }
       if (amount === 0) {
         // 0.00 === 0 is false for some reason
         empty.push(revolutRecord);
@@ -42,6 +50,7 @@ export function processRevolut(
           description,
           rowIndex: revolutRecord.rowIndex,
         };
+
         const fee = +revolutRecord.fee;
         if (fee) {
           const gsFeeRecord: GSExpenseOrIncomeCsvRow = {
@@ -53,6 +62,10 @@ export function processRevolut(
             description: `Fee for ${description}`,
             rowIndex: revolutRecord.rowIndex,
           };
+          gsFeeRecord.duplicate = isDuplicate(
+            gsFeeRecord,
+            data.topExpenseRecords,
+          );
           expenses.push(gsFeeRecord);
         }
 
@@ -66,10 +79,14 @@ export function processRevolut(
             incomes.push(gsRecord);
           }
         } else {
+          gsRecord.duplicate = isDuplicate(gsRecord, data.topExpenseRecords);
           expenses.push(gsRecord);
         }
       }
     }
+
+    // @ts-ignore
+    window['revolut'] = { expenses, incomes, empty, manual };
     return { expenses, incomes, empty, manual };
   } catch (err) {
     console.error(err);
@@ -96,7 +113,7 @@ function getRevolutRecords(csvString: string): RevolutCsvRow[] {
         ],
         index,
       ) => {
-        if (recordType !== 'Type') {
+        if (recordType && recordType !== 'Type') {
           acc.push({
             recordType,
             product,
@@ -116,4 +133,15 @@ function getRevolutRecords(csvString: string): RevolutCsvRow[] {
       [],
     )
     .sort((a, b) => Date.parse(b.startedDate) - Date.parse(a.startedDate));
+}
+function isDuplicate(
+  gsFeeRecord: GSExpenseOrIncomeCsvRow,
+  topExpenseRecords: ResultCsvRow[],
+): boolean {
+  return topExpenseRecords.some(
+    (record) =>
+      record.expensesAmount === gsFeeRecord.amount &&
+      record.date === gsFeeRecord.date &&
+      record.account === gsFeeRecord.account,
+  );
 }

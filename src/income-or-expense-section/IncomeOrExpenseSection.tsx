@@ -1,5 +1,5 @@
 import * as Papa from 'papaparse';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { GSExpenseOrIncomeCsvRow } from '../model';
 
 export const IncomeOrExpenseSection: React.FC<{
@@ -27,6 +27,9 @@ export const IncomeOrExpenseSection: React.FC<{
     setIsProcessing(true);
     const rows = [];
     for (const record of records) {
+      if (record.duplicate) {
+        continue;
+      }
       const { amount, currency, account, category, date, description } = record;
       rows.push([
         `${amount}`,
@@ -44,13 +47,22 @@ export const IncomeOrExpenseSection: React.FC<{
     }
   }
 
+  const nonDuplicateRecords = useMemo(
+    () => records.filter((x) => !x.duplicate),
+    [records],
+  );
+  const emptyCategoryRecords = useMemo(
+    () => nonDuplicateRecords.filter((x) => !x.category),
+    [nonDuplicateRecords],
+  );
+
   return (
     <section>
       {isProcessing ? (
         <h5>Processing...</h5>
       ) : (
         <h5>
-          {title} ({records.filter((x) => !x.category).length}/{records.length})
+          {title} ({emptyCategoryRecords.length}/{nonDuplicateRecords.length})
           <button
             type="button"
             className="btn btn-primary btn-clipboard"
@@ -82,7 +94,16 @@ export const IncomeOrExpenseSection: React.FC<{
         </thead>
         <tbody>
           {records.map((record, index) => (
-            <tr key={index} className={record.category ? '' : 'table-warning'}>
+            <tr
+              key={index}
+              className={
+                record.duplicate
+                  ? 'table-danger'
+                  : record.category
+                  ? ''
+                  : 'table-warning'
+              }
+            >
               <td>{record.account}</td>
               <td>
                 <p className="fs-4 text-nowrap m-0">{record.category}</p>
