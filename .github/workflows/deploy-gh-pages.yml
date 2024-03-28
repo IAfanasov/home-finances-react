@@ -34,14 +34,10 @@ jobs:
         REACT_APP_SPREADSHEET_ID: 1yRqayCb6txRRWUYG2JBgeUPz55ewl1JTT2WWimCpJ-4
         REACT_APP_EXPENSES_SHEET_ID: 465594934
         REACT_APP_INCOME_SHEET_ID: 1527825823
-    # - name: Upload artifact
-    #   uses: actions/upload-pages-artifact@v3
-    #   with:
-    #     path: ./build
 
-    - run: touch build/.nojekyll
+    # - run: touch build/.nojekyll
     - name: Deploy build 🚀
-      uses: JamesIves/github-pages-deploy-action@releases/v4
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: gh-pages # The branch the action should deploy to.
