@@ -3,10 +3,10 @@ import {
   BankStatementProcessingResult,
   GSExpenseOrIncomeCsvRow,
   HomeFinanceData,
-  ResultCsvRow,
   RevolutCsvRow,
 } from '../model';
 import { getCategory } from '../shared/category-utils';
+import { isDuplicateRecord } from '../shared/isDuplicateRecord';
 
 export function processRevolut(
   csvString: string,
@@ -62,7 +62,7 @@ export function processRevolut(
             description: `Fee for ${description}`,
             rowIndex: revolutRecord.rowIndex,
           };
-          gsFeeRecord.duplicate = isDuplicate(
+          gsFeeRecord.duplicate = isDuplicateRecord(
             gsFeeRecord,
             data.topExpenseRecords,
           );
@@ -79,7 +79,10 @@ export function processRevolut(
             incomes.push(gsRecord);
           }
         } else {
-          gsRecord.duplicate = isDuplicate(gsRecord, data.topExpenseRecords);
+          gsRecord.duplicate = isDuplicateRecord(
+            gsRecord,
+            data.topExpenseRecords,
+          );
           expenses.push(gsRecord);
         }
       }
@@ -133,15 +136,4 @@ function getRevolutRecords(csvString: string): RevolutCsvRow[] {
       [],
     )
     .sort((a, b) => Date.parse(b.startedDate) - Date.parse(a.startedDate));
-}
-function isDuplicate(
-  gsFeeRecord: GSExpenseOrIncomeCsvRow,
-  topExpenseRecords: ResultCsvRow[],
-): boolean {
-  return topExpenseRecords.some(
-    (record) =>
-      record.expensesAmount === gsFeeRecord.amount &&
-      record.date === gsFeeRecord.date &&
-      record.account === gsFeeRecord.account,
-  );
 }

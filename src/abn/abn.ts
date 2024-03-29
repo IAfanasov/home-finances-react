@@ -6,6 +6,7 @@ import {
 } from '../model';
 import { getCategory } from '../shared/category-utils';
 import { AbnCsvRow } from './model';
+import { isDuplicateRecord } from '../shared/isDuplicateRecord';
 
 export function processAbn(
   csvString: string,
@@ -50,10 +51,14 @@ export function processAbn(
         if (amount > 0) {
           incomes.push(gsRecord);
         } else {
+          gsRecord.duplicate = isDuplicateRecord(gsRecord, data.topExpenseRecords);
           expenses.push(gsRecord);
         }
       }
     }
+
+    expenses.sort((a, b) => -1*a.date.localeCompare(b.date));
+    incomes.sort((a, b) => -1*a.date.localeCompare(b.date));
     return { expenses, incomes, empty, manual };
   } catch (err) {
     console.error(err);
