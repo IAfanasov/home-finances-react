@@ -98,7 +98,7 @@ export function processRevolut(
 }
 
 function getRevolutRecords(csvString: string): RevolutCsvRow[] {
-  return Papa.parse<string[]>(csvString)
+  return Papa.parse<string[]>(csvString, { skipEmptyLines: true })
     .data.reduce<RevolutCsvRow[]>(
       (
         acc,

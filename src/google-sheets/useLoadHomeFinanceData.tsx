@@ -4,12 +4,17 @@ import { CategoryData, HomeFinanceData, ResultCsvRow } from '../model';
 interface UseLoadHomeFinanceDataArgs {
   onDataLoaded: (data: HomeFinanceData) => void;
 }
-export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataArgs) {
+export function useLoadHomeFinanceData({
+  onDataLoaded,
+}: UseLoadHomeFinanceDataArgs) {
   return useCallback(() => {
-    const DISCOVERY_DOC_SHEETS = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-    const DISCOVERY_DOC_DRIVE = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+    const DISCOVERY_DOC_SHEETS =
+      'https://sheets.googleapis.com/$discovery/rest?version=v4';
+    const DISCOVERY_DOC_DRIVE =
+      'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
-    const SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
+    const SCOPES =
+      'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
 
     gapi.load('client', intializeGapiClient);
 
@@ -21,11 +26,12 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
         })
         .then(
           async () => {
-            const tokenClient: google.accounts.oauth2.TokenClient = google.accounts.oauth2.initTokenClient({
-              client_id: process.env.REACT_APP_CLIENT_ID,
-              scope: SCOPES,
-              callback: onTokenInitialized,
-            });
+            const tokenClient: google.accounts.oauth2.TokenClient =
+              google.accounts.oauth2.initTokenClient({
+                client_id: process.env.REACT_APP_CLIENT_ID,
+                scope: SCOPES,
+                callback: onTokenInitialized,
+              });
 
             const token = gapi.client.getToken();
             if (token) {
@@ -39,11 +45,13 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
           },
           (err) => {
             console.error(err);
-          }
+          },
         );
     }
 
-    async function onTokenInitialized(tokenResponse: google.accounts.oauth2.TokenResponse) {
+    async function onTokenInitialized(
+      tokenResponse: google.accounts.oauth2.TokenResponse,
+    ) {
       if (tokenResponse.error) {
         console.error(tokenResponse);
         return;
@@ -52,7 +60,9 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
     }
 
     async function loadData() {
-      async function loadArrayFromSpreadsheet(range: string): Promise<string[][]> {
+      async function loadArrayFromSpreadsheet(
+        range: string,
+      ): Promise<string[][]> {
         console.info('loading range', range);
         let response: gapi.client.Response<gapi.client.sheets.ValueRange>;
         try {
@@ -90,18 +100,23 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
       }
 
       function extractExpenseRecords(values: string[][]): ResultCsvRow[] {
-        return values
-          .map((x) => ({
-            date: x[4],
-            expensesAmount: Number(x[0]),
-            account: x[2],
-            category: x[3],
-            currency: x[1],
-            description: x[5],
-          }));
+        return values.map((x) => ({
+          date: x[4],
+          expensesAmount: Number(x[0]),
+          account: x[2],
+          category: x[3],
+          currency: x[1],
+          description: x[5],
+        }));
       }
 
-      const [currencies, incomeCategories, expenseCategories, accounts, topExpenseRecords] = await Promise.all([
+      const [
+        currencies,
+        incomeCategories,
+        expenseCategories,
+        accounts,
+        topExpenseRecords,
+      ] = await Promise.all([
         loadArrayFromSpreadsheet('Currency!B:B'),
         loadArrayFromSpreadsheet(`'Income category'!A:D`),
         loadArrayFromSpreadsheet(`'Expense category'!A:D`),
@@ -111,8 +126,12 @@ export function useLoadHomeFinanceData({ onDataLoaded }: UseLoadHomeFinanceDataA
 
       onDataLoaded({
         currencies: flatten(currencies),
-        incomeCategories: extractCategories(incomeCategories),
-        expenseCategories: extractCategories(expenseCategories),
+        incomeCategories: extractCategories(incomeCategories).sort((a, b) =>
+          a.name > b.name ? 1 : -1,
+        ),
+        expenseCategories: extractCategories(expenseCategories).sort((a, b) =>
+          a.name > b.name ? 1 : -1,
+        ),
         accounts: flatten(accounts),
         topExpenseRecords: extractExpenseRecords(topExpenseRecords),
       });

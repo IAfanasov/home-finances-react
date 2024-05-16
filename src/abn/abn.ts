@@ -51,14 +51,17 @@ export function processAbn(
         if (amount > 0) {
           incomes.push(gsRecord);
         } else {
-          gsRecord.duplicate = isDuplicateRecord(gsRecord, data.topExpenseRecords);
+          gsRecord.duplicate = isDuplicateRecord(
+            gsRecord,
+            data.topExpenseRecords,
+          );
           expenses.push(gsRecord);
         }
       }
     }
 
-    expenses.sort((a, b) => -1*a.date.localeCompare(b.date));
-    incomes.sort((a, b) => -1*a.date.localeCompare(b.date));
+    expenses.sort((a, b) => -1 * a.date.localeCompare(b.date));
+    incomes.sort((a, b) => -1 * a.date.localeCompare(b.date));
     return { expenses, incomes, empty, manual };
   } catch (err) {
     console.error(err);
@@ -71,7 +74,7 @@ export function toDashedDate(numStr: string): string {
 }
 
 function getAbnRecords(csvString: string): AbnCsvRow[] {
-  return Papa.parse<string[]>(csvString)
+  return Papa.parse<string[]>(csvString, { skipEmptyLines: true })
     .data.filter((row) => row[0])
     .map(
       (

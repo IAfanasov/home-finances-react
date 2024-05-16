@@ -1,17 +1,30 @@
 import * as Papa from 'papaparse';
 import { useMemo, useState } from 'react';
-import { GSExpenseOrIncomeCsvRow } from '../model';
+import { CategoryData, GSExpenseOrIncomeCsvRow } from '../model';
 
 export const IncomeOrExpenseSection: React.FC<{
   title: string;
   records: GSExpenseOrIncomeCsvRow[];
+  categories: CategoryData[];
   onCopy: (rows: string[][]) => Promise<any>;
   onDeleteRecord: (record: GSExpenseOrIncomeCsvRow) => void;
+  onRecordUpdate: (
+    record: GSExpenseOrIncomeCsvRow,
+    newRecord: GSExpenseOrIncomeCsvRow,
+  ) => void;
   onDeleteRecordAnBelow: (
     index: number,
     records: GSExpenseOrIncomeCsvRow[],
   ) => void;
-}> = ({ title, records, onCopy, onDeleteRecord, onDeleteRecordAnBelow }) => {
+}> = ({
+  title,
+  records,
+  categories,
+  onCopy,
+  onDeleteRecord,
+  onDeleteRecordAnBelow,
+  onRecordUpdate,
+}) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   function copyToClipboard(records: GSExpenseOrIncomeCsvRow[]) {
@@ -106,7 +119,22 @@ export const IncomeOrExpenseSection: React.FC<{
             >
               <td>{record.account}</td>
               <td>
-                <p className="fs-4 text-nowrap m-0">{record.category}</p>
+                <p className="fs-4 text-nowrap m-0">
+                  <select
+                    defaultValue={record.category}
+                    className="form-select mb-3"
+                    onChange={(e) =>
+                      onRecordUpdate(record, {
+                        ...record,
+                        category: e.target.value,
+                      })
+                    }
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                </p>
                 <p className="fs-6 m-0 text-secondary break-anywhere">
                   {record.description}
                 </p>

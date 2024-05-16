@@ -11,17 +11,14 @@ import {
 import { processRevolut } from '../revolut/revolut';
 import { HomeFinanceDataContext } from '../shared/data-context';
 
+type TCSVRow = AbnCsvRow | RevolutCsvRow;
 function CsvExport() {
-  const initialState: BankStatementProcessingResult<AbnCsvRow | RevolutCsvRow> =
-    {
-      expenses: [],
-      incomes: [],
-      empty: [],
-      manual: [],
-    };
   const [isSucceed, setIsSucceed] = useState(true);
   const [parseError, setParseError] = useState(null);
-  const [state, setState] = useState(initialState);
+  const [expenses, setExpenses] = useState<GSExpenseOrIncomeCsvRow[]>([]);
+  const [incomes, setIncomes] = useState<GSExpenseOrIncomeCsvRow[]>([]);
+  const [emptyRecords, setEmptyRecords] = useState<TCSVRow[]>([]);
+  const [manualRecords, setManualRecords] = useState<TCSVRow[]>([]);
   const [rawText, setRawText] = useState('');
   const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
 
@@ -36,19 +33,26 @@ function CsvExport() {
         }
         setIsSucceed(true);
         setParseError(null);
-        setState({
-          expenses: result.expenses,
-          incomes: result.incomes,
-          empty: result.empty,
-          manual: result.manual,
-        });
+        setExpenses(result.expenses);
+        setIncomes(result.incomes);
+        setEmptyRecords(result.empty);
+        setManualRecords(result.manual);
       } catch (err: any) {
         setIsSucceed(false);
         setParseError(err?.toString());
       }
     }
     processNewText();
-  }, [rawText, homeFinanceData, setState, setIsSucceed, setParseError]);
+  }, [
+    rawText,
+    homeFinanceData,
+    setIsSucceed,
+    setParseError,
+    setExpenses,
+    setIncomes,
+    setEmptyRecords,
+    setManualRecords,
+  ]);
 
   const onDeleteRecord = useCallback(
     (record: GSExpenseOrIncomeCsvRow) => {
@@ -78,7 +82,7 @@ function CsvExport() {
   );
 
   const deleteDuplicates = useCallback(() => {
-    const recordsToDelete = state.expenses
+    const recordsToDelete = expenses
       .filter((record) => record.duplicate)
       .map((record) => record.rowIndex);
     setRawText((prevVal) => {
@@ -87,7 +91,7 @@ function CsvExport() {
         .filter((_, index) => !recordsToDelete.includes(index))
         .join('\n');
     });
-  }, [setRawText, state.expenses]);
+  }, [setRawText, expenses]);
 
   return (
     <div className="p-3">
@@ -119,7 +123,8 @@ function CsvExport() {
       <div className="d-flex gap-5">
         <IncomeOrExpenseSection
           title={'Expenses'}
-          records={state.expenses}
+          records={expenses}
+          categories={homeFinanceData?.expenseCategories || []}
           onCopy={(rows) =>
             appendExpensesOrIncome(
               rows,
@@ -129,10 +134,18 @@ function CsvExport() {
           }
           onDeleteRecord={onDeleteRecord}
           onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+          onRecordUpdate={(oldRecord, newRecord) => {
+            setExpenses((prev) =>
+              prev.map((record) =>
+                record.rowIndex === oldRecord.rowIndex ? newRecord : record,
+              ),
+            );
+          }}
         />
         <IncomeOrExpenseSection
           title={'Incomes'}
-          records={state.incomes}
+          records={incomes}
+          categories={homeFinanceData?.incomeCategories || []}
           onCopy={(rows) =>
             appendExpensesOrIncome(
               rows,
@@ -142,12 +155,19 @@ function CsvExport() {
           }
           onDeleteRecord={onDeleteRecord}
           onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+          onRecordUpdate={(oldRecord, newRecord) => {
+            setIncomes((prev) =>
+              prev.map((record) =>
+                record.rowIndex === oldRecord.rowIndex ? newRecord : record,
+              ),
+            );
+          }}
         />
       </div>
-      <h5>Manual ({state.manual.length})</h5>
-      <pre className="p-3">{JSON.stringify(state.manual, null, 4)}</pre>
-      <h5>Empty ({state.empty.length})</h5>
-      <pre className="p-3">{JSON.stringify(state.empty, null, 4)}</pre>
+      <h5>Manual ({manualRecords.length})</h5>
+      <pre className="p-3">{JSON.stringify(manualRecords, null, 4)}</pre>
+      <h5>Empty ({emptyRecords.length})</h5>
+      <pre className="p-3">{JSON.stringify(emptyRecords, null, 4)}</pre>
     </div>
   );
 }
