@@ -119,22 +119,23 @@ export const IncomeOrExpenseSection: React.FC<{
             >
               <td>{record.account}</td>
               <td>
-                <p className="fs-4 text-nowrap m-0">
-                  <select
-                    defaultValue={record.category}
-                    className="form-select mb-3"
-                    onChange={(e) =>
-                      onRecordUpdate(record, {
-                        ...record,
-                        category: e.target.value,
-                      })
-                    }
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </p>
+                <select
+                  value={record.category}
+                  className="form-select mb-3"
+                  onChange={(e) =>
+                    onRecordUpdate(record, {
+                      ...record,
+                      category: e.target.value,
+                    })
+                  }
+                >
+                  <option key={''}></option>
+                  {categories.map((cat) => (
+                    <option value={cat.name} key={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
                 <p className="fs-6 m-0 text-secondary break-anywhere">
                   {record.description}
                 </p>
