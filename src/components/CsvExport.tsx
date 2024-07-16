@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { processAbn } from '../abn/abn';
 import { AbnCsvRow } from '../abn/model';
 import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
@@ -10,11 +10,13 @@ import {
 } from '../model';
 import { processRevolut } from '../revolut/revolut';
 import { HomeFinanceDataContext } from '../shared/data-context';
+import { parseTrPdfStatement } from '../tr/tr';
 
 type TCSVRow = AbnCsvRow | RevolutCsvRow;
+
 function CsvExport() {
   const [isSucceed, setIsSucceed] = useState(true);
-  const [parseError, setParseError] = useState(null);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<GSExpenseOrIncomeCsvRow[]>([]);
   const [incomes, setIncomes] = useState<GSExpenseOrIncomeCsvRow[]>([]);
   const [emptyRecords, setEmptyRecords] = useState<TCSVRow[]>([]);
@@ -93,6 +95,39 @@ function CsvExport() {
     });
   }, [setRawText, expenses]);
 
+  const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      console.log('Selected file:', file.name);
+      const reader = new FileReader();
+      reader.onload = async function (e: ProgressEvent<FileReader>) {
+        const content = e.target?.result as ArrayBuffer;
+        console.log('File content loaded, length:', content.byteLength);
+        try {
+          const result = await parseTrPdfStatement(content, homeFinanceData!);
+          
+          setExpenses(result.expenses);
+          setIncomes(result.incomes);
+          setEmptyRecords(result.empty);
+          setManualRecords(result.manual);
+          setIsSucceed(true);
+          setParseError(null);
+        } catch (error) {
+          console.error('Error parsing PDF:', error);
+          setIsSucceed(false);
+          setParseError('Error parsing PDF: ' + (error as Error).message);
+        }
+      };
+      reader.onerror = function (e) {
+        console.error('Error reading file:', e);
+        setIsSucceed(false);
+        setParseError('Error reading file');
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
   return (
     <div className="p-3">
       <textarea
@@ -102,6 +137,17 @@ function CsvExport() {
         onChange={(newVal) => setRawText(newVal.target.value)}
       ></textarea>
 
+      <label htmlFor="pdfInput" className="form-label">
+        Upload PDF Statement
+      </label>
+      <input
+        type="file"
+        className="form-control"
+        id="pdfInput"
+        accept=".pdf"
+        onChange={handlePdfFileSelect}
+        onClick={(e) => ((e.target as HTMLInputElement).value = '')}
+      />
       <button
         type="button"
         className="btn btn-primary mb-4"
