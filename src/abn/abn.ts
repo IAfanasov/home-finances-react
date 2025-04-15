@@ -39,6 +39,7 @@ export function processAbn(
         empty.push(abnRecord);
       } else {
         const gsRecord: GSExpenseOrIncomeCsvRow = {
+          id: 'temp',
           amount: Math.abs(amount),
           currency: abnRecord.mutationcode,
           account: 'ABN',
@@ -49,8 +50,10 @@ export function processAbn(
         };
 
         if (amount > 0) {
+          gsRecord.id = `abn-income-${incomes.length.toString()}`;
           incomes.push(gsRecord);
         } else {
+          gsRecord.id = `abn-expense-${expenses.length.toString()}`;
           gsRecord.duplicate = isDuplicateRecord(
             gsRecord,
             data.topExpenseRecords,

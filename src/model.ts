@@ -88,6 +88,7 @@ export interface RevolutCsvRow {
 }
 
 export interface GSExpenseOrIncomeCsvRow {
+  id: string;
   amount: number;
   currency: string;
   account: string;

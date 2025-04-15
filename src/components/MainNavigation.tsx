@@ -8,12 +8,12 @@ export const MainNavigation = memo(() => (
             <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                 <li className="nav-item">
                     <NavLink className="nav-link" to={RoutePath.csv}>
-                        CSV
+                        Import
                     </NavLink>
                 </li>
                 <li>
                     <NavLink className="nav-link" to={RoutePath.root}>
-                        Add expense
+                        Manual
                     </NavLink>
                 </li>
             </ul>

@@ -81,6 +81,7 @@ export const parseTrPdfStatement = async (
           description.includes(s),
         );
         const gsRecord: GSExpenseOrIncomeCsvRow = {
+          id: 'temp',
           amount,
           currency: 'EUR',
           account: 'TR cash',
@@ -94,11 +95,14 @@ export const parseTrPdfStatement = async (
         };
 
         if (amount === 0) {
+          gsRecord.id = `trade-republic-empty-${empty.length.toString()}`;
           empty.push(gsRecord);
         } else {
           if (isIncome) {
+            gsRecord.id = `trade-republic-income-${incomes.length.toString()}`;
             incomes.push(gsRecord);
           } else {
+            gsRecord.id = `trade-republic-expense-${expenses.length.toString()}`;
             gsRecord.duplicate = isDuplicateRecord(
               gsRecord,
               data.topExpenseRecords,

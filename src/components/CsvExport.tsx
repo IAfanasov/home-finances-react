@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { processAbn } from '../abn/abn';
 import { AbnCsvRow } from '../abn/model';
 import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
@@ -21,131 +21,82 @@ function CsvExport() {
   const [incomes, setIncomes] = useState<GSExpenseOrIncomeCsvRow[]>([]);
   const [emptyRecords, setEmptyRecords] = useState<TCSVRow[]>([]);
   const [manualRecords, setManualRecords] = useState<TCSVRow[]>([]);
-  const [rawText, setRawText] = useState('');
   const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
-
-  useEffect(() => {
-    async function processNewText() {
-      try {
-        let result: BankStatementProcessingResult<AbnCsvRow | RevolutCsvRow>;
-        if (rawText.split('\t').length > 3) {
-          result = processAbn(rawText, homeFinanceData!);
-        } else {
-          result = processRevolut(rawText, homeFinanceData!);
-        }
-        setIsSucceed(true);
-        setParseError(null);
-        setExpenses(result.expenses);
-        setIncomes(result.incomes);
-        setEmptyRecords(result.empty);
-        setManualRecords(result.manual);
-      } catch (err: any) {
-        setIsSucceed(false);
-        setParseError(err?.toString());
-      }
-    }
-    processNewText();
-  }, [
-    rawText,
-    homeFinanceData,
-    setIsSucceed,
-    setParseError,
-    setExpenses,
-    setIncomes,
-    setEmptyRecords,
-    setManualRecords,
-  ]);
 
   const onDeleteRecord = useCallback(
     (record: GSExpenseOrIncomeCsvRow) => {
-      setRawText((prevVal) => {
-        return prevVal
-          .split('\n')
-          .filter((_, index) => index !== record.rowIndex)
-          .join('\n');
-      });
+      setExpenses((prev) => prev.filter((x) => x.id !== record.id));
     },
-    [setRawText],
+    [setExpenses],
   );
 
   const onDeleteRecordAnBelow = useCallback(
     (index: number, records: GSExpenseOrIncomeCsvRow[]) => {
-      const recordsToDelete = records
-        .slice(index)
-        .map((record) => record.rowIndex);
-      setRawText((prevVal) => {
-        return prevVal
-          .split('\n')
-          .filter((_, index) => !recordsToDelete.includes(index))
-          .join('\n');
-      });
+      const recordsToDelete = new Set(
+        records.slice(index).map((record) => record.id),
+      );
+      setExpenses((prev) => prev.filter((x) => !recordsToDelete.has(x.id)));
     },
-    [setRawText],
+    [setExpenses],
   );
 
   const deleteDuplicates = useCallback(() => {
-    const recordsToDelete = expenses
-      .filter((record) => record.duplicate)
-      .map((record) => record.rowIndex);
-    setRawText((prevVal) => {
-      return prevVal
-        .split('\n')
-        .filter((_, index) => !recordsToDelete.includes(index))
-        .join('\n');
-    });
-  }, [setRawText, expenses]);
+    setExpenses((prev) => prev.filter((x) => !x.duplicate));
+  }, [setExpenses]);
 
-  const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
-    if (file) {
-      console.log('Selected file:', file.name);
-      const reader = new FileReader();
-      reader.onload = async function (e: ProgressEvent<FileReader>) {
-        const content = e.target?.result as ArrayBuffer;
-        console.log('File content loaded, length:', content.byteLength);
-        try {
-          const result = await parseTrPdfStatement(content, homeFinanceData!);
-          
-          setExpenses(result.expenses);
-          setIncomes(result.incomes);
-          setEmptyRecords(result.empty);
-          setManualRecords(result.manual);
-          setIsSucceed(true);
-          setParseError(null);
-        } catch (error) {
-          console.error('Error parsing PDF:', error);
-          setIsSucceed(false);
-          setParseError('Error parsing PDF: ' + (error as Error).message);
-        }
-      };
-      reader.onerror = function (e) {
-        console.error('Error reading file:', e);
-        setIsSucceed(false);
-        setParseError('Error reading file');
-      };
-      reader.readAsArrayBuffer(file);
+    if (!file) {
+      return;
     }
+    console.log('Selected file:', file.name);
+    const reader = new FileReader();
+    reader.onload = async function (e: ProgressEvent<FileReader>) {
+      const content = e.target?.result as ArrayBuffer;
+      console.log('File content loaded, length:', content.byteLength);
+      try {
+        let result: BankStatementProcessingResult<AbnCsvRow | RevolutCsvRow>;
+        if (file.name.toLocaleLowerCase().endsWith('.csv')) {
+          const text = new TextDecoder('utf-8').decode(content);
+          result = processRevolut(text, homeFinanceData!);
+        } else if (file.name.toLocaleLowerCase().endsWith('.tab')) {
+          const text = new TextDecoder('utf-8').decode(content);
+          result = processAbn(text, homeFinanceData!);
+        } else {
+          result = await parseTrPdfStatement(content, homeFinanceData!);
+        }
+        setExpenses(result.expenses);
+        setIncomes(result.incomes);
+        setEmptyRecords(result.empty);
+        setManualRecords(result.manual);
+        setIsSucceed(true);
+        setParseError(null);
+      } catch (error) {
+        console.error('Error parsing PDF:', error);
+        setIsSucceed(false);
+        setParseError('Error parsing PDF: ' + (error as Error).message);
+      }
+    };
+    reader.onerror = function (e) {
+      console.error('Error reading file:', e);
+      setIsSucceed(false);
+      setParseError('Error reading file');
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   return (
     <div className="p-3">
-      <textarea
-        className="form-control mb-2"
-        rows={10}
-        value={rawText}
-        onChange={(newVal) => setRawText(newVal.target.value)}
-      ></textarea>
-
-      <label htmlFor="pdfInput" className="form-label">
-        Upload PDF Statement
+      <label htmlFor="fileInput" className="form-label">
+        Upload Statement
       </label>
       <input
         type="file"
         className="form-control"
-        id="pdfInput"
-        accept=".pdf"
-        onChange={handlePdfFileSelect}
+        id="fileInput"
+        accept=".pdf, .csv, .tab"
+        onChange={handleFileSelect}
         onClick={(e) => ((e.target as HTMLInputElement).value = '')}
       />
       <button

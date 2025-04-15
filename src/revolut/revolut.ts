@@ -42,6 +42,7 @@ export function processRevolut(
         empty.push(revolutRecord);
       } else {
         const gsRecord: GSExpenseOrIncomeCsvRow = {
+          id: 'temp',
           amount: Math.abs(amount),
           currency: revolutRecord.currency,
           account: 'Revolut',
@@ -54,6 +55,7 @@ export function processRevolut(
         const fee = +revolutRecord.fee;
         if (fee) {
           const gsFeeRecord: GSExpenseOrIncomeCsvRow = {
+            id: `revolut-fee-${expenses.length.toString()}`,
             amount: fee,
             currency: revolutRecord.currency,
             account: 'Revolut',
@@ -76,9 +78,11 @@ export function processRevolut(
           ) {
             // TODO transfer
           } else {
+            gsRecord.id =`revolut-income-${incomes.length.toString()}`;
             incomes.push(gsRecord);
           }
         } else {
+          gsRecord.id = `revolut-expense-${expenses.length.toString()}`;
           gsRecord.duplicate = isDuplicateRecord(
             gsRecord,
             data.topExpenseRecords,

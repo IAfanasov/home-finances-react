@@ -81,6 +81,7 @@ export const IncomeOrExpenseSection: React.FC<{
             className="btn btn-primary btn-clipboard"
             onClick={() => copyToClipboard(records)}
             data-bs-original-title="Copy to clipboard"
+            style={{ marginRight: '10px' }}
           >
             Copy
           </button>
@@ -108,7 +109,7 @@ export const IncomeOrExpenseSection: React.FC<{
         <tbody>
           {records.map((record, index) => (
             <tr
-              key={index}
+              key={record.id}
               className={
                 record.duplicate
                   ? 'table-danger'
