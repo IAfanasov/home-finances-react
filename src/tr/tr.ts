@@ -24,96 +24,169 @@ export const parseTrPdfStatement = async (
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
-    const lines = textContent.items.map((item: any) => item.str);
+    const items = textContent.items.map((item: any) => ({
+      str: item.str,
+      transform: item.transform,
+      width: item.width,
+      height: item.height,
+      x: item.transform[4],
+      y: item.transform[5]
+    }));
 
-    console.log(`Page ${pageNum} text:`, lines.join('\n'));
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      // Match lines that start with a date in the format "dd MMM."
-      const dateMatch = line.match(/^\d{2} \w{3}\./);
-
-      if (dateMatch) {
-        const dateParts = line.split(' ');
-        const nextLine = lines[i + 1].trim();
-        const date = `${nextLine}-${getMonthFromAbbr(
-          dateParts[1],
-        )}-${dateParts[0].padStart(2, '0')}`;
-        let description = '';
-        let amountLine = '';
-
-        // Look ahead to next lines to find description and amount
-        for (let j = i + 2; j < lines.length; j++) {
-          const nextLine = lines[j].trim();
-
-          if (nextLine.startsWith('€') || nextLine.includes('BEDRAG')) {
-            amountLine = nextLine;
-            break;
-          } else {
-            description += nextLine + ' ';
-          }
-        }
-
-        description = description.replace('Kaarttransactie', '').trim();
-
-        console.log(
-          'Date:',
-          date,
-          'Description:',
-          description,
-          'Amount line:',
-          amountLine,
-        );
-
-        let amount = 0;
-
-        if (amountLine.includes('€')) {
-          const amountMatch = amountLine.match(/€\s*([\d,.]+)/);
-          if (amountMatch) {
-            amount = parseFloat(
-              amountMatch[1].replace('.', '').replace(',', '.'),
-            );
-          }
-        }
-
-        const isIncome = ['Rentebetaling', 'Savings plan execution'].some((s) =>
-          description.includes(s),
-        );
-        const gsRecord: GSExpenseOrIncomeCsvRow = {
-          id: 'temp',
-          amount,
-          currency: 'EUR',
-          account: 'TR cash',
-          date,
-          description,
-          rowIndex: rowIndex++,
-          category: getCategory(
-            { amount: isIncome ? amount : -1 * amount, description },
-            data,
-          ),
-        };
-
-        if (amount === 0) {
-          gsRecord.id = `trade-republic-empty-${empty.length.toString()}`;
-          empty.push(gsRecord);
-        } else {
-          if (isIncome) {
-            gsRecord.id = `trade-republic-income-${incomes.length.toString()}`;
-            incomes.push(gsRecord);
-          } else {
-            gsRecord.id = `trade-republic-expense-${expenses.length.toString()}`;
-            gsRecord.duplicate = isDuplicateRecord(
-              gsRecord,
-              data.topExpenseRecords,
-            );
-            expenses.push(gsRecord);
-          }
-        }
-
-        // Skip the lines we just processed
-        i += description.split(' ').length;
+    // Group items by y-coordinate to reconstruct lines
+    const yGroups = new Map<number, typeof items>();
+    for (const item of items) {
+      const y = Math.round(item.y);
+      if (!yGroups.has(y)) {
+        yGroups.set(y, []);
       }
+      yGroups.get(y)!.push(item);
+    }
+
+    // Sort items within each line by x-coordinate and join them
+    const lines = Array.from(yGroups.entries())
+      .sort(([y1], [y2]) => y2 - y1) // Sort lines from top to bottom
+      .map(([_, items]) => {
+        const sortedItems = items.sort((a, b) => a.x - b.x);
+        return sortedItems.map(item => item.str).join('');
+      });
+
+    // Find the range between 'ACCOUNT TRANSACTIONS' and 'BALANCE OVERVIEW'
+    const startIdx = lines.findIndex(line => line.toUpperCase().includes('ACCOUNT TRANSACTIONS'));
+    const endIdx = lines.findIndex(line => line.toUpperCase().includes('BALANCE OVERVIEW'));
+    let relevantLines = lines;
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      relevantLines = lines.slice(startIdx + 1, endIdx);
+    }
+    console.log('Relevant lines for transactions:', relevantLines);
+
+    // Print all relevant lines with their index for header inspection
+    relevantLines.forEach((line, idx) => {
+      console.log(`LINE ${idx}:`, line);
+    });
+
+    // Find the header line - it should contain "DATE TYPE DESCRIPTION BALANCE"
+    const headerIdx = relevantLines.findIndex(line =>
+      /date.*type.*description.*balance/i.test(line)
+    );
+    
+    if (headerIdx === -1) {
+      console.log('No header found in this page');
+      continue;
+    }
+
+    console.log('Found header at line', headerIdx, ':', relevantLines[headerIdx]);
+
+    // Parse transactions starting after the header
+    for (let i = headerIdx + 1; i < relevantLines.length; i++) {
+      const line = relevantLines[i].trim();
+      if (!line) continue;
+
+      // Look for date pattern (e.g., "01 May", "02 May", etc.)
+      const dateMatch = line.match(/(\d{2})\s+(\w{3})/i);
+      if (!dateMatch) {
+        continue;
+      }
+
+      const day = dateMatch[1];
+      const monthAbbr = dateMatch[2];
+      const month = getMonthFromAbbr(monthAbbr);
+      const year = '2025'; // From the statement period
+
+      // Get the next line which should contain description and amounts
+      const nextLine = relevantLines[i + 1]?.trim() || '';
+      
+      // Extract amounts from the next line
+      const amountMatches = nextLine.match(/€([\d,]+\.?\d*)/g);
+      if (!amountMatches || amountMatches.length < 2) {
+        console.log('No amounts found for transaction:', line, nextLine);
+        continue;
+      }
+
+      // Convert amount strings to numbers
+      const amounts = amountMatches.map(amt => 
+        parseFloat(amt.replace('€', '').replace(',', ''))
+      );
+
+      // Determine if this is income or expense based on transaction type
+      const transactionType = line.toLowerCase();
+      const nextLineLower = nextLine.toLowerCase();
+      const isIncome = transactionType.includes('interest') || 
+                      transactionType.includes('reward') || 
+                      transactionType.includes('earnings') ||
+                      transactionType.includes('dividend') ||
+                      transactionType.includes('saveback') ||
+                      nextLineLower.includes('interest') ||
+                      nextLineLower.includes('reward') ||
+                      nextLineLower.includes('earnings') ||
+                      nextLineLower.includes('dividend') ||
+                      nextLineLower.includes('saveback');
+
+      // For expenses, we typically see the amount and new balance
+      // For incomes, we see the amount and new balance
+      // The first amount is usually the transaction amount, second is the new balance
+      const transactionAmount = amounts[0];
+      const newBalance = amounts[1];
+
+      // Extract description from the next line
+      let description = nextLine.replace(/€[\d,]+\.?\d*/g, '').trim();
+      if (!description) {
+        description = line.replace(/(\d{2})\s+(\w{3})/i, '').trim();
+      }
+
+      // Clean up description - remove transaction type prefixes
+      description = description.replace(/^(card|interest|reward|earnings|savings plan execution)/i, '').trim();
+      
+      // For card transactions, try to extract merchant name from the original line
+      if (transactionType.includes('card') && !description.includes('€')) {
+        const cardMatch = line.match(/card(.+)/i);
+        if (cardMatch) {
+          description = cardMatch[1].trim();
+        }
+      }
+
+      // Create the transaction record
+      const transaction = {
+        date: `${year}-${month}-${day}`,
+        description: description || 'Unknown transaction',
+        amount: Math.abs(transactionAmount),
+        type: isIncome ? 'income' : 'expense',
+        balance: newBalance
+      };
+
+      console.log('Parsed transaction:', transaction);
+
+      // Add to appropriate array
+      if (isIncome) {
+        incomes.push({
+          id: `tr_income_${rowIndex}`,
+          date: transaction.date,
+          description: transaction.description,
+          amount: transaction.amount,
+          currency: 'EUR',
+          account: 'Trade Republic',
+          category: getCategory({ amount: transaction.amount, description: transaction.description }, data),
+          rowIndex: rowIndex++
+        });
+      } else {
+        expenses.push({
+          id: `tr_expense_${rowIndex}`,
+          date: transaction.date,
+          description: transaction.description,
+          amount: transaction.amount,
+          currency: 'EUR',
+          account: 'Trade Republic',
+          category: getCategory({ amount: -transaction.amount, description: transaction.description }, data),
+          rowIndex: rowIndex++
+        });
+        
+        // Check for duplicates
+        const lastExpense = expenses[expenses.length - 1];
+        lastExpense.duplicate = isDuplicateRecord(lastExpense, data.topExpenseRecords);
+      }
+
+      // Skip the next line since we've already processed it
+      i++;
     }
   }
 
@@ -124,19 +197,19 @@ export const parseTrPdfStatement = async (
 // Helper function to convert month abbreviation to number
 const getMonthFromAbbr = (abbr: string) => {
   const months: { [m: string]: string } = {
-    'jan.': '01',
-    'feb.': '02',
-    'mrt.': '03',
-    'apr.': '04',
-    mei: '05',
-    'jun.': '06',
-    'jul.': '07',
-    'aug.': '08',
-    'sep.': '09',
-    'okt.': '10',
-    'nov.': '11',
-    'dec.': '12',
+    'jan.': '01', 'jan': '01',
+    'feb.': '02', 'feb': '02',
+    'mrt.': '03', 'mrt': '03',
+    'apr.': '04', 'apr': '04',
+    'mei': '05',
+    'may.': '05', 'may': '05',
+    'jun.': '06', 'jun': '06',
+    'jul.': '07', 'jul': '07',
+    'aug.': '08', 'aug': '08',
+    'sep.': '09', 'sep': '09',
+    'okt.': '10', 'okt': '10',
+    'nov.': '11', 'nov': '11',
+    'dec.': '12', 'dec': '12',
   };
-
   return months[abbr.toLowerCase()] || '00';
 };
