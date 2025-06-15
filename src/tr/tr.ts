@@ -158,13 +158,17 @@ export const parseTrPdfStatement = async (
 
       // Add to appropriate array
       if (isIncome) {
+        const account = transaction.description.toLowerCase().includes('saveback') 
+          ? 'TR investments' 
+          : 'TR cash';
+          
         incomes.push({
           id: `tr_income_${rowIndex}`,
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,
           currency: 'EUR',
-          account: 'Trade Republic',
+          account: account,
           category: getCategory({ amount: transaction.amount, description: transaction.description }, data),
           rowIndex: rowIndex++
         });
@@ -175,7 +179,7 @@ export const parseTrPdfStatement = async (
           description: transaction.description,
           amount: transaction.amount,
           currency: 'EUR',
-          account: 'Trade Republic',
+          account: 'TR cash',
           category: getCategory({ amount: -transaction.amount, description: transaction.description }, data),
           rowIndex: rowIndex++
         });
