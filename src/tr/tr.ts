@@ -195,7 +195,7 @@ export const parseTrPdfStatement = async (
   }
 
   console.log('Parsed rows:', { expenses, incomes, empty, manual });
-  return { expenses, incomes, empty, manual };
+  return { expenses, incomes, empty, manual, transfers: [] };
 };
 
 // Helper function to convert month abbreviation to number

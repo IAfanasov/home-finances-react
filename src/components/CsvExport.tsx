@@ -2,15 +2,19 @@ import React, { useCallback, useContext, useState } from 'react';
 import { processAbn } from '../abn/abn';
 import { AbnCsvRow } from '../abn/model';
 import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
+import { appendTransfers } from '../google-sheets/appendTransfers';
 import { IncomeOrExpenseSection } from '../income-or-expense-section/IncomeOrExpenseSection';
+import { TransferSection } from '../transfer-section/TransferSection';
 import {
   BankStatementProcessingResult,
   GSExpenseOrIncomeCsvRow,
+  GSTransferCsvRow,
   RevolutCsvRow,
 } from '../model';
 import { processRevolut } from '../revolut/revolut';
 import { HomeFinanceDataContext } from '../shared/data-context';
 import { parseTrPdfStatement } from '../tr/tr';
+import { getCategory } from '../shared/category-utils';
 
 type TCSVRow = AbnCsvRow | RevolutCsvRow;
 
@@ -21,6 +25,7 @@ function CsvExport() {
   const [incomes, setIncomes] = useState<GSExpenseOrIncomeCsvRow[]>([]);
   const [emptyRecords, setEmptyRecords] = useState<TCSVRow[]>([]);
   const [manualRecords, setManualRecords] = useState<TCSVRow[]>([]);
+  const [transfers, setTransfers] = useState<GSTransferCsvRow[]>([]);
   const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
 
   const onDeleteRecord = useCallback(
@@ -40,9 +45,57 @@ function CsvExport() {
     [setExpenses],
   );
 
+  const onDeleteTransferRecord = useCallback(
+    (record: GSTransferCsvRow) => {
+      setTransfers((prev) => prev.filter((x) => x.id !== record.id));
+    },
+    [setTransfers],
+  );
+
+  const onDeleteTransferRecordAnBelow = useCallback(
+    (index: number, records: GSTransferCsvRow[]) => {
+      const recordsToDelete = new Set(
+        records.slice(index).map((record) => record.id),
+      );
+      setTransfers((prev) => prev.filter((x) => !recordsToDelete.has(x.id)));
+    },
+    [setTransfers],
+  );
+
+  const onTransferRecordUpdate = useCallback(
+    (oldRecord: GSTransferCsvRow, newRecord: GSTransferCsvRow) => {
+      setTransfers((prev) =>
+        prev.map((record) =>
+          record.rowIndex === oldRecord.rowIndex ? newRecord : record,
+        ),
+      );
+    },
+    [setTransfers],
+  );
+
   const deleteDuplicates = useCallback(() => {
     setExpenses((prev) => prev.filter((x) => !x.duplicate));
   }, [setExpenses]);
+
+  const onTransformTransferToExpense = useCallback(
+    (transfer: GSTransferCsvRow) => {
+      setTransfers((prev) => prev.filter((x) => x.id !== transfer.id));
+      setExpenses((prev) => [
+        {
+          id: `manual-expense-${Date.now()}`,
+          amount: Math.abs(transfer.amount),
+          currency: transfer.currency,
+          account: transfer.fromAccount,
+          category: homeFinanceData ? getCategory({ amount: -Math.abs(transfer.amount), description: transfer.description || '' }, homeFinanceData) : undefined,
+          date: transfer.date,
+          description: transfer.description,
+          rowIndex: transfer.rowIndex,
+        },
+        ...prev,
+      ]);
+    },
+    [setTransfers, setExpenses, homeFinanceData],
+  );
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -70,6 +123,7 @@ function CsvExport() {
         setIncomes(result.incomes);
         setEmptyRecords(result.empty);
         setManualRecords(result.manual);
+        setTransfers(result.transfers);
         setIsSucceed(true);
         setParseError(null);
       } catch (error) {
@@ -117,50 +171,71 @@ function CsvExport() {
         </div>
       )}
 
-      <div className="d-flex gap-5">
-        <IncomeOrExpenseSection
-          title={'Expenses'}
-          records={expenses}
-          categories={homeFinanceData?.expenseCategories || []}
-          onCopy={(rows) =>
-            appendExpensesOrIncome(
-              rows,
-              process.env.REACT_APP_EXPENSES_SHEET_ID,
-              'expense',
-            )
-          }
-          onDeleteRecord={onDeleteRecord}
-          onDeleteRecordAnBelow={onDeleteRecordAnBelow}
-          onRecordUpdate={(oldRecord, newRecord) => {
-            setExpenses((prev) =>
-              prev.map((record) =>
-                record.rowIndex === oldRecord.rowIndex ? newRecord : record,
-              ),
-            );
-          }}
-        />
-        <IncomeOrExpenseSection
-          title={'Incomes'}
-          records={incomes}
-          categories={homeFinanceData?.incomeCategories || []}
-          onCopy={(rows) =>
-            appendExpensesOrIncome(
-              rows,
-              process.env.REACT_APP_INCOME_SHEET_ID,
-              'Income',
-            )
-          }
-          onDeleteRecord={onDeleteRecord}
-          onDeleteRecordAnBelow={onDeleteRecordAnBelow}
-          onRecordUpdate={(oldRecord, newRecord) => {
-            setIncomes((prev) =>
-              prev.map((record) =>
-                record.rowIndex === oldRecord.rowIndex ? newRecord : record,
-              ),
-            );
-          }}
-        />
+      <div className="d-flex gap-5 align-items-start">
+        <div style={{ flex: 1 }}>
+          <IncomeOrExpenseSection
+            title={'Expenses'}
+            records={expenses}
+            categories={homeFinanceData?.expenseCategories || []}
+            onCopy={(rows) =>
+              appendExpensesOrIncome(
+                rows,
+                process.env.REACT_APP_EXPENSES_SHEET_ID,
+                'expense',
+              )
+            }
+            onDeleteRecord={onDeleteRecord}
+            onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+            onRecordUpdate={(oldRecord, newRecord) => {
+              setExpenses((prev) =>
+                prev.map((record) =>
+                  record.rowIndex === oldRecord.rowIndex ? newRecord : record,
+                ),
+              );
+            }}
+          />
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <IncomeOrExpenseSection
+            title={'Incomes'}
+            records={incomes}
+            categories={homeFinanceData?.incomeCategories || []}
+            onCopy={(rows) =>
+              appendExpensesOrIncome(
+                rows,
+                process.env.REACT_APP_INCOME_SHEET_ID,
+                'Income',
+              )
+            }
+            onDeleteRecord={onDeleteRecord}
+            onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+            onRecordUpdate={(oldRecord, newRecord) => {
+              setIncomes((prev) =>
+                prev.map((record) =>
+                  record.rowIndex === oldRecord.rowIndex ? newRecord : record,
+                ),
+              );
+            }}
+          />
+          <TransferSection
+            title={'Transfers'}
+            records={transfers}
+            accounts={homeFinanceData?.accounts || []}
+            onCopy={(rows) =>
+              appendTransfers(
+                rows,
+                process.env.REACT_APP_TRANSFERS_SHEET_ID,
+                'Transfer',
+              )
+            }
+            onDeleteRecord={onDeleteTransferRecord}
+            onDeleteRecordAnBelow={onDeleteTransferRecordAnBelow}
+            onRecordUpdate={onTransferRecordUpdate}
+            onTransformToExpense={onTransformTransferToExpense}
+          />
+        </div>
       </div>
+
       <h5>Manual ({manualRecords.length})</h5>
       <pre className="p-3">{JSON.stringify(manualRecords, null, 4)}</pre>
       <h5>Empty ({emptyRecords.length})</h5>

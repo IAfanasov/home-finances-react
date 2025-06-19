@@ -65,7 +65,7 @@ export function processAbn(
 
     expenses.sort((a, b) => -1 * a.date.localeCompare(b.date));
     incomes.sort((a, b) => -1 * a.date.localeCompare(b.date));
-    return { expenses, incomes, empty, manual };
+    return { expenses, incomes, empty, manual, transfers: [] };
   } catch (err) {
     console.error(err);
     throw err;

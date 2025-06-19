@@ -99,6 +99,18 @@ export interface GSExpenseOrIncomeCsvRow {
   duplicate?: boolean;
 }
 
+export interface GSTransferCsvRow {
+  id: string;
+  amount: number;
+  currency: string;
+  fromAccount: string;
+  toAccount: string;
+  date: string;
+  description?: string;
+  rowIndex: number;
+  duplicate?: boolean;
+}
+
 export interface HomeFinanceData {
   currencies: string[];
   incomeCategories: CategoryData[];
@@ -115,6 +127,7 @@ export interface CategoryData {
 export interface BankStatementProcessingResult<TCSVRow> {
   expenses: GSExpenseOrIncomeCsvRow[];
   incomes: GSExpenseOrIncomeCsvRow[];
+  transfers: GSTransferCsvRow[];
   empty: TCSVRow[];
   manual: TCSVRow[];
 }

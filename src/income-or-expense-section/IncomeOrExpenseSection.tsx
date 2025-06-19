@@ -97,69 +97,65 @@ export const IncomeOrExpenseSection: React.FC<{
         </h5>
       )}
       <table className="table record-table">
-        <thead>
-          <tr>
-            <th scope="col">Account</th>
-            <th scope="col">Category</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Date</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
         <tbody>
           {records.map((record, index) => (
             <tr
               key={record.id}
-              className={
-                record.duplicate
-                  ? 'table-danger'
-                  : record.category
-                  ? ''
-                  : 'table-warning'
-              }
             >
-              <td>{record.account}</td>
-              <td>
-                <select
-                  value={record.category}
-                  className="form-select mb-3"
-                  onChange={(e) =>
-                    onRecordUpdate(record, {
-                      ...record,
-                      category: e.target.value,
-                    })
-                  }
+              <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid #dee2e6', background: 'transparent' }}>
+                <div
+                  className={`record-grid-row${record.duplicate ? ' bg-danger-subtle' : !record.category ? ' bg-warning-subtle' : ''}`}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr auto', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.5rem 0 0.5rem' }}
                 >
-                  <option key={''}></option>
-                  {categories.map((cat) => (
-                    <option value={cat.name} key={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="fs-6 m-0 text-secondary break-anywhere">
-                  {record.description}
-                </p>
-              </td>
-              <td className="text-end text-nowrap">
-                {record.amount} {record.currency}
-              </td>
-              <td className="text-nowrap">{record.date}</td>
-              <td className="text-nowrap">
-                <button
-                  type="button"
-                  className="btn btn-light bg-warning"
-                  onClick={() => onDeleteRecord?.(record)}
-                >
-                  <i className="bi bi-x"></i>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-light bg-danger"
-                  onClick={() => onDeleteRecordAnBelow?.(index, records)}
-                >
-                  <i className="bi bi-arrow-down"></i>
-                </button>
+                  <div>{record.account}</div>
+                  <div>
+                    <select
+                      value={record.category}
+                      className="form-select mb-0"
+                      style={{ minWidth: 120 }}
+                      onChange={(e) =>
+                        onRecordUpdate(record, {
+                          ...record,
+                          category: e.target.value,
+                        })
+                      }
+                    >
+                      <option key={''}></option>
+                      {categories.map((cat) => (
+                        <option value={cat.name} key={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="text-end text-nowrap">
+                    {record.amount} {record.currency}
+                  </div>
+                  <div className="text-nowrap">
+                    <time title={record.date} dateTime={record.date}>
+                      {record.date.split(' ')[0]}
+                    </time>
+                  </div>
+                  <div className="text-nowrap d-flex gap-1">
+                    <button
+                      type="button"
+                      className="btn btn-light bg-warning btn-sm"
+                      onClick={() => onDeleteRecord?.(record)}
+                    >
+                      <i className="bi bi-x"></i>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-light bg-danger btn-sm"
+                      onClick={() => onDeleteRecordAnBelow?.(index, records)}
+                    >
+                      <i className="bi bi-arrow-down"></i>
+                    </button>
+                  </div>
+                  <div className="fs-6 text-secondary break-anywhere" style={{ fontSize: '0.85em', gridColumn: '1 / -1', paddingTop: 0 }}>
+                    {record.description || '\u00A0'}
+                  </div>
+                </div>
               </td>
             </tr>
           ))}
@@ -168,3 +164,13 @@ export const IncomeOrExpenseSection: React.FC<{
     </section>
   );
 };
+
+/* Add this to your CSS or a style block:
+.record-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem 0 0.5rem;
+}
+*/
