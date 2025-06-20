@@ -27,15 +27,6 @@ export const IncomeOrExpenseSection: React.FC<{
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  function copyToClipboard(records: GSExpenseOrIncomeCsvRow[]) {
-    const csvString = Papa.unparse(records, {
-      header: false,
-      skipEmptyLines: true,
-      delimiter: ',',
-    });
-    navigator.clipboard.writeText(csvString);
-  }
-
   async function copyToGS(records: GSExpenseOrIncomeCsvRow[]) {
     setIsProcessing(true);
     const rows = [];
@@ -76,15 +67,6 @@ export const IncomeOrExpenseSection: React.FC<{
       ) : (
         <h5>
           {title} ({emptyCategoryRecords.length}/{nonDuplicateRecords.length})
-          <button
-            type="button"
-            className="btn btn-primary btn-clipboard"
-            onClick={() => copyToClipboard(records)}
-            data-bs-original-title="Copy to clipboard"
-            style={{ marginRight: '10px' }}
-          >
-            Copy
-          </button>
           <button
             type="button"
             className="btn btn-primary btn-clipboard"

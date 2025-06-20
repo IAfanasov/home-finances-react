@@ -29,15 +29,6 @@ export const TransferSection: React.FC<{
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  function copyToClipboard(records: GSTransferCsvRow[]) {
-    const csvString = Papa.unparse(records, {
-      header: false,
-      skipEmptyLines: true,
-      delimiter: ',',
-    });
-    navigator.clipboard.writeText(csvString);
-  }
-
   async function copyToGS(records: GSTransferCsvRow[]) {
     setIsProcessing(true);
     const rows = [];
@@ -77,15 +68,6 @@ export const TransferSection: React.FC<{
           <button
             type="button"
             className="btn btn-primary btn-clipboard"
-            onClick={() => copyToClipboard(records)}
-            data-bs-original-title="Copy to clipboard"
-            style={{ marginRight: '10px' }}
-          >
-            Copy
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary btn-clipboard"
             disabled={isProcessing}
             onClick={() => copyToGS(records)}
             data-bs-original-title="Move records to google sheets"
@@ -95,98 +77,96 @@ export const TransferSection: React.FC<{
         </h5>
       )}
       <table className="table record-table">
-        <thead>
-          <tr>
-            <th scope="col">From Account</th>
-            <th scope="col">To Account</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Date</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
         <tbody>
-          {records.map((record, index) => (
-            <>
-              <tr
-                key={record.id}
-                className={record.duplicate ? 'table-danger' : ''}
-              >
-                <td>
-                  <select
-                    value={record.fromAccount}
-                    className="form-select mb-3"
-                    style={{ minWidth: '200px' }}
-                    onChange={e =>
-                      onRecordUpdate(record, {
-                        ...record,
-                        fromAccount: e.target.value,
-                      })
-                    }
+          {records.map((record, index) => {
+            const isWarning = !record.fromAccount || !record.toAccount;
+            return (
+              <tr key={record.id}>
+                <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid #dee2e6', background: 'transparent' }}>
+                  <div
+                    className={`record-grid-row${record.duplicate ? ' bg-danger-subtle' : isWarning ? ' bg-warning-subtle' : ''}`}
+                    style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr auto', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.5rem 0 0.5rem' }}
                   >
-                    <option key={''}></option>
-                    {accounts.map((acc) => (
-                      <option value={acc} key={acc}>
-                        {acc}
-                      </option>
-                    ))}
-                  </select>
-                  {record.description && (
-                    <div className="fs-6 text-secondary break-anywhere" style={{ fontSize: '0.85em' }}>
-                      {record.description}
+                    <div>
+                      <select
+                        value={record.fromAccount}
+                        className="form-select mb-0"
+                        style={{ minWidth: '120px' }}
+                        onChange={e =>
+                          onRecordUpdate(record, {
+                            ...record,
+                            fromAccount: e.target.value,
+                          })
+                        }
+                      >
+                        <option key={''}></option>
+                        {accounts.map((acc) => (
+                          <option value={acc} key={acc}>
+                            {acc}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
-                </td>
-                <td>
-                  <select
-                    value={record.toAccount}
-                    className="form-select mb-3"
-                    style={{ minWidth: '200px' }}
-                    onChange={e =>
-                      onRecordUpdate(record, {
-                        ...record,
-                        toAccount: e.target.value,
-                      })
-                    }
-                  >
-                    <option key={''}></option>
-                    {accounts.map((acc) => (
-                      <option value={acc} key={acc}>
-                        {acc}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="text-end text-nowrap">
-                  {record.amount} {record.currency}
-                </td>
-                <td className="text-nowrap">{record.date}</td>
-                <td className="text-nowrap">
-                  <button
-                    type="button"
-                    className="btn btn-light bg-warning"
-                    onClick={() => onDeleteRecord?.(record)}
-                  >
-                    <i className="bi bi-x"></i>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-light bg-danger"
-                    onClick={() => onDeleteRecordAnBelow?.(index, records)}
-                  >
-                    <i className="bi bi-arrow-down"></i>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-light bg-info"
-                    title="Transform to expense"
-                    onClick={() => onTransformToExpense(record)}
-                  >
-                    <i className="bi bi-arrow-left-right"></i>
-                  </button>
+                    <div>
+                      <select
+                        value={record.toAccount}
+                        className="form-select mb-0"
+                        style={{ minWidth: '120px' }}
+                        onChange={e =>
+                          onRecordUpdate(record, {
+                            ...record,
+                            toAccount: e.target.value,
+                          })
+                        }
+                      >
+                        <option key={''}></option>
+                        {accounts.map((acc) => (
+                          <option value={acc} key={acc}>
+                            {acc}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="text-end text-nowrap">
+                      {record.amount} {record.currency}
+                    </div>
+                    <div className="text-nowrap">
+                      <time title={record.date} dateTime={record.date}>
+                        {record.date.split(' ')[0]}
+                      </time>
+                    </div>
+                    <div className="text-nowrap d-flex gap-1">
+                      <button
+                        type="button"
+                        className="btn btn-light bg-warning btn-sm"
+                        onClick={() => onDeleteRecord?.(record)}
+                      >
+                        <i className="bi bi-x"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-light bg-danger btn-sm"
+                        onClick={() => onDeleteRecordAnBelow?.(index, records)}
+                      >
+                        <i className="bi bi-arrow-down"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-light bg-info btn-sm"
+                        title="Transform to expense"
+                        onClick={() => onTransformToExpense(record)}
+                      >
+                        <i className="bi bi-arrow-left-right"></i>
+                      </button>
+                    </div>
+                    <div className="fs-6 text-secondary break-anywhere" style={{ fontSize: '0.85em', gridColumn: '1 / -1', paddingTop: 0 }}>
+                      {record.description || '\u00A0'}
+                    </div>
+                  </div>
                 </td>
               </tr>
-            </>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </section>
