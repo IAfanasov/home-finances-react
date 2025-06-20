@@ -50,10 +50,10 @@ export function processAbn(
         };
 
         if (amount > 0) {
-          gsRecord.id = `abn-income-${incomes.length.toString()}`;
+          gsRecord.id = `abn-income-${incomes.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
           incomes.push(gsRecord);
         } else {
-          gsRecord.id = `abn-expense-${expenses.length.toString()}`;
+          gsRecord.id = `abn-expense-${expenses.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
           gsRecord.duplicate = isDuplicateRecord(
             gsRecord,
             data.topExpenseRecords,

@@ -161,9 +161,8 @@ export const parseTrPdfStatement = async (
         const account = transaction.description.toLowerCase().includes('saveback') 
           ? 'TR investments' 
           : 'TR cash';
-          
         incomes.push({
-          id: `tr_income_${rowIndex}`,
+          id: `tr_income_${rowIndex}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,
@@ -174,7 +173,7 @@ export const parseTrPdfStatement = async (
         });
       } else {
         expenses.push({
-          id: `tr_expense_${rowIndex}`,
+          id: `tr_expense_${rowIndex}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           date: transaction.date,
           description: transaction.description,
           amount: transaction.amount,

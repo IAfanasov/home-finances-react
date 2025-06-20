@@ -80,9 +80,9 @@ function CsvExport() {
   const onTransformTransferToExpense = useCallback(
     (transfer: GSTransferCsvRow) => {
       setTransfers((prev) => prev.filter((x) => x.id !== transfer.id));
-      setExpenses((prev) => [
-        {
-          id: `manual-expense-${Date.now()}`,
+      setExpenses((prev) => {
+        const newExpense = {
+          id: `manual-expense-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           amount: Math.abs(transfer.amount),
           currency: transfer.currency,
           account: transfer.fromAccount,
@@ -90,9 +90,9 @@ function CsvExport() {
           date: transfer.date,
           description: transfer.description,
           rowIndex: transfer.rowIndex,
-        },
-        ...prev,
-      ]);
+        };
+        return [...prev, newExpense].sort((a, b) => b.date.localeCompare(a.date));
+      });
     },
     [setTransfers, setExpenses, homeFinanceData],
   );

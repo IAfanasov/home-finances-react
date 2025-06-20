@@ -169,11 +169,11 @@ export function processRevolut(
         ) {
           // TODO transfer
         } else {
-          gsRecord.id =`revolut-income-${incomes.length.toString()}`;
+          gsRecord.id =`revolut-income-${incomes.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
           incomes.push(gsRecord);
         }
       } else {
-        gsRecord.id = `revolut-expense-${expenses.length.toString()}`;
+        gsRecord.id = `revolut-expense-${expenses.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
         gsRecord.duplicate = isDuplicateRecord(
           gsRecord,
           data.topExpenseRecords,
