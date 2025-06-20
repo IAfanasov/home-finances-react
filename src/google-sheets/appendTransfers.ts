@@ -49,14 +49,14 @@ export async function appendTransfers(
                 startRowIndex: startCopyRowIndex,
                 endRowIndex: endCopyRowIndex,
                 startColumnIndex: 0,
-                endColumnIndex: 8,
+                endColumnIndex: 6,
               },
               destination: {
                 sheetId,
                 startRowIndex: startInsertRowIndex,
                 endRowIndex: endInsertRowIndex,
                 startColumnIndex: 0,
-                endColumnIndex: 8,
+                endColumnIndex: 6,
               },
               pasteType: "PASTE_NORMAL",
             },
@@ -89,39 +89,6 @@ export async function appendTransfers(
     );
     logDone("Pasting values");
 
-    log("Copy pasting calculated values");
-    // copy paste converted to eur value
-    const copyPasteCalculatedValue: gapi.client.sheets.BatchUpdateSpreadsheetRequest =
-      {
-        requests: [
-          {
-            copyPaste: {
-              source: {
-                sheetId,
-                startRowIndex: startInsertRowIndex,
-                endRowIndex: endInsertRowIndex,
-                startColumnIndex: 1,
-                endColumnIndex: 2,
-              },
-              destination: {
-                sheetId,
-                startRowIndex: startInsertRowIndex,
-                endRowIndex: endInsertRowIndex,
-                startColumnIndex: 0,
-                endColumnIndex: 1,
-              },
-              pasteType: "PASTE_VALUES",
-            },
-          },
-        ],
-      };
-    await gapi.client.sheets.spreadsheets.batchUpdate(
-      {
-        spreadsheetId: process.env.REACT_APP_SPREADSHEET_ID,
-      },
-      copyPasteCalculatedValue
-    );
-    logDone("Copy pasting calculated values");
   } finally {
     console.timeEnd("appendTransfers");
   }
