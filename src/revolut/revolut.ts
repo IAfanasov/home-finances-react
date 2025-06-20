@@ -43,6 +43,41 @@ export function processRevolut(
         continue;
       }
       
+      if (recordType === 'TRANSFER' && description.toLowerCase().indexOf('tikkie') >= 0) {
+        const gsRecord: GSExpenseOrIncomeCsvRow = {
+          id: `revolut-expense-${expenses.length.toString()}`,
+          amount: Math.abs(amount),
+          currency: revolutRecord.currency,
+          account: 'Revolut',
+          category: getCategory({ amount, description }, data),
+          date: revolutRecord.startedDate,
+          description,
+          rowIndex: revolutRecord.rowIndex,
+        };
+        gsRecord.duplicate = isDuplicateRecord(
+          gsRecord,
+          data.topExpenseRecords,
+        );
+        expenses.push(gsRecord);
+        continue;
+      }
+      
+      if (recordType === 'TRANSFER' && description.indexOf('Transfer from Revolut user') >= 0) {
+        const transferRecord: GSTransferCsvRow = {
+          id: `revolut-transfer-${transfers.length.toString()}`,
+          amount: Math.abs(amount),
+          currency: revolutRecord.currency,
+          fromAccount: '',
+          toAccount: 'Revolut',
+          date: revolutRecord.startedDate,
+          description,
+          rowIndex: revolutRecord.rowIndex,
+          duplicate: false,
+        };
+        transfers.push(transferRecord);
+        continue;
+      }
+      
       if (recordType === 'TRANSFER') {
         let fromAccount = 'Revolut';
         let toAccount = '';
@@ -74,15 +109,22 @@ export function processRevolut(
         continue;
       }
       
-      if (description.indexOf('Payment from I Afanasov Cj') >= 0) {
-        manual.push(revolutRecord);
+      if (recordType === 'TOPUP' && description === 'Payment from I Afanasov Cj') {
+        const transferRecord: GSTransferCsvRow = {
+          id: `revolut-transfer-${transfers.length.toString()}`,
+          amount: Math.abs(amount),
+          currency: revolutRecord.currency,
+          fromAccount: 'ABN',
+          toAccount: 'Revolut',
+          date: revolutRecord.startedDate,
+          description,
+          rowIndex: revolutRecord.rowIndex,
+          duplicate: false,
+        };
+        transfers.push(transferRecord);
         continue;
       }
-      
-      if (description.indexOf('Savings vault') >= 0) {
-        manual.push(revolutRecord);
-        continue;
-      }
+
       
       if (amount === 0) {
         // 0.00 === 0 is false for some reason
