@@ -44,19 +44,26 @@ export function processRevolut(
       }
       
       if (recordType === 'TRANSFER') {
+        let fromAccount = 'Revolut';
         let toAccount = '';
-        
+
         if (description.indexOf('To investment account') >= 0) {
           toAccount = 'Revolut Investment';
-        } else if (description.indexOf('Savings vault topup') >= 0) {
+        } else if (description.toLowerCase().indexOf('savings vault topup') >= 0) {
           toAccount = 'Revolut Savings';
+        } else if (description === 'From Flexible account') {
+          fromAccount = 'Revolut Savings';
+          toAccount = 'Revolut';
+        } else if (description === 'Savings vault withdrawal from prefunding wallet') {
+          fromAccount = 'Revolut Savings';
+          toAccount = 'Revolut';
         }
-        
+
         const transferRecord: GSTransferCsvRow = {
           id: `revolut-transfer-${transfers.length.toString()}`,
           amount: Math.abs(amount),
           currency: revolutRecord.currency,
-          fromAccount: 'Revolut',
+          fromAccount,
           toAccount,
           date: revolutRecord.startedDate,
           description,
@@ -133,9 +140,20 @@ export function processRevolut(
       }
     }
 
-    // @ts-ignore
-    window['revolut'] = { expenses, incomes, empty, manual, transfers };
-    return { expenses, incomes, transfers, empty, manual };
+    const uniqueTransfers: GSTransferCsvRow[] = [];
+    for (const t of transfers) {
+      const isDup = uniqueTransfers.some(u =>
+        u.amount === t.amount &&
+        u.fromAccount === t.fromAccount &&
+        u.toAccount === t.toAccount &&
+        Math.abs(Date.parse(u.date) - Date.parse(t.date)) < 5000
+      );
+      if (!isDup) {
+        uniqueTransfers.push(t);
+      }
+    }
+    
+    return { expenses, incomes, transfers: uniqueTransfers, empty, manual };
   } catch (err) {
     console.error(err);
     throw err;
