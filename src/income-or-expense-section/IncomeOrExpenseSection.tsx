@@ -1,4 +1,3 @@
-import * as Papa from 'papaparse';
 import { useMemo, useState } from 'react';
 import { CategoryData, GSExpenseOrIncomeCsvRow } from '../model';
 
