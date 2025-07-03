@@ -1,3 +1,5 @@
-[x] no text input
-[x] handle csv files from the file selector
-[x] change data storage
+[ ] monthly statement
+[ ] income report
+[ ] expence report
+[ ] cash amount report
+[ ] change data source?
