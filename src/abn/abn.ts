@@ -2,6 +2,7 @@ import * as Papa from 'papaparse';
 import {
   BankStatementProcessingResult,
   GSExpenseOrIncomeCsvRow,
+  GSTransferCsvRow,
   HomeFinanceData,
 } from '../model';
 import { getCategory } from '../shared/category-utils';
@@ -21,20 +22,51 @@ export function processAbn(
     const empty: AbnCsvRow[] = [];
     const manual: AbnCsvRow[] = [];
     const expenses: GSExpenseOrIncomeCsvRow[] = [];
+    const transfers: GSTransferCsvRow[] = [];
     for (const abnRecord of records) {
       const amount = +abnRecord.amount.replace(',', '.');
       const { description } = abnRecord;
 
       if (
-        (description.indexOf('hypotheek') >= 0 &&
-          description.indexOf('ABN AMRO BANK NV') >= 0) ||
-        description.indexOf('ABN AMRO KREDIETEN BV') >= 0 ||
-        description.indexOf('Geldmaat') >= 0 ||
-        description.indexOf('LT913250033728930193') >= 0
+        description.indexOf('LT913250033728930193') >= 0 ||
+        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL13REVO2122588111/BIC/REVONL22XXX /NAME/Igor Afanasov/REMI/Sent from Revolut/EREF/NOTPROVIDED') >= 0
       ) {
         manual.push(abnRecord);
         continue;
       }
+
+      if (
+        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL79ABNA0122234367/BIC/ABNANL2A/NAME/Direct Savings/EREF/NOTPROVIDED') >= 0
+      ) {
+        transfers.push({
+          id: `abn-transfer-${transfers.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          amount: Math.abs(amount),
+          currency: abnRecord.mutationcode,
+          fromAccount: 'ABN',
+          toAccount: 'ABN saving',
+          date: toDashedDate(abnRecord.transactiondate),
+          description,
+          rowIndex: abnRecord.rowIndex,
+        });
+        continue;
+      }
+
+      if (
+        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL79ABNA0122234367/BIC/ABNANL2A/NAME/I AFANASOV CJ/EREF/NOTPROVIDED') >= 0
+      ) {
+        transfers.push({
+          id: `abn-transfer-${transfers.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          amount: Math.abs(amount),
+          currency: abnRecord.mutationcode,
+          fromAccount: 'ABN saving',
+          toAccount: 'ABN',
+          date: toDashedDate(abnRecord.transactiondate),
+          description,
+          rowIndex: abnRecord.rowIndex,
+        });
+        continue;
+      }
+
       if (amount === 0) {
         empty.push(abnRecord);
       } else {
@@ -65,7 +97,7 @@ export function processAbn(
 
     expenses.sort((a, b) => -1 * a.date.localeCompare(b.date));
     incomes.sort((a, b) => -1 * a.date.localeCompare(b.date));
-    return { expenses, incomes, empty, manual, transfers: [] };
+    return { expenses, incomes, empty, manual, transfers };
   } catch (err) {
     console.error(err);
     throw err;
