@@ -65,7 +65,14 @@ function CsvExport() {
     [setExpenses],
   );
 
-  const onDeleteRecordAnBelow = useCallback(
+  const onDeleteIncomeRecord = useCallback(
+    (record: GSExpenseOrIncomeCsvRow) => {
+      setIncomes((prev) => prev.filter((x) => x.id !== record.id));
+    },
+    [setIncomes],
+  );
+
+  const onDeleteExpenseRecordAnBelow = useCallback(
     (index: number, records: GSExpenseOrIncomeCsvRow[]) => {
       const recordsToDelete = new Set(
         records.slice(index).map((record) => record.id),
@@ -73,6 +80,16 @@ function CsvExport() {
       setExpenses((prev) => prev.filter((x) => !recordsToDelete.has(x.id)));
     },
     [setExpenses],
+  );
+
+  const onDeleteIncomeRecordAnBelow = useCallback(
+    (index: number, records: GSExpenseOrIncomeCsvRow[]) => {
+      const recordsToDelete = new Set(
+        records.slice(index).map((record) => record.id),
+      );
+      setIncomes((prev) => prev.filter((x) => !recordsToDelete.has(x.id)));
+    },
+    [setIncomes],
   );
 
   const onDeleteTransferRecord = useCallback(
@@ -215,7 +232,7 @@ function CsvExport() {
               )
             }
             onDeleteRecord={onDeleteRecord}
-            onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+            onDeleteRecordAnBelow={onDeleteExpenseRecordAnBelow}
             onRecordUpdate={(oldRecord, newRecord) => {
               setExpenses((prev) =>
                 prev.map((record) =>
@@ -237,8 +254,8 @@ function CsvExport() {
                 'Income',
               )
             }
-            onDeleteRecord={onDeleteRecord}
-            onDeleteRecordAnBelow={onDeleteRecordAnBelow}
+            onDeleteRecord={onDeleteIncomeRecord}
+            onDeleteRecordAnBelow={onDeleteIncomeRecordAnBelow}
             onRecordUpdate={(oldRecord, newRecord) => {
               setIncomes((prev) =>
                 prev.map((record) =>
