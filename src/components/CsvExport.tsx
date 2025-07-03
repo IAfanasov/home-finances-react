@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useState, useEffect } from 'react';
 import { processAbn } from '../abn/abn';
 import { AbnCsvRow } from '../abn/model';
 import { appendExpensesOrIncome } from '../google-sheets/appendExpensesOrIncome';
@@ -27,6 +27,36 @@ function CsvExport() {
   const [manualRecords, setManualRecords] = useState<TCSVRow[]>([]);
   const [transfers, setTransfers] = useState<GSTransferCsvRow[]>([]);
   const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
+
+  useEffect(() => {
+    if (!homeFinanceData) {
+      return;
+    }
+    setExpenses(prevExpenses =>
+      prevExpenses.map(expense => {
+        const newCategory = getCategory({ amount: expense.amount, description: expense.description || '' }, homeFinanceData);
+        if (newCategory === expense.category) {
+          return expense;
+        }
+        return {
+          ...expense,
+          category: newCategory,
+        };
+      })
+    );
+    setIncomes(prevIncomes =>
+      prevIncomes.map(income => {
+        const newCategory = getCategory({ amount: income.amount, description: income.description || '' }, homeFinanceData);
+        if (newCategory === income.category) {
+            return income;
+        }
+        return {
+          ...income,
+          category: newCategory,
+        };
+      })
+    );
+  }, [homeFinanceData, setExpenses, setIncomes]);
 
   const onDeleteRecord = useCallback(
     (record: GSExpenseOrIncomeCsvRow) => {
