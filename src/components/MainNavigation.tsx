@@ -12,6 +12,11 @@ export const MainNavigation = memo(() => (
                     </NavLink>
                 </li>
                 <li>
+                    <NavLink className="nav-link" to={RoutePath.statement}>
+                        Statement
+                    </NavLink>
+                </li>
+                <li>
                     <NavLink className="nav-link" to={RoutePath.root}>
                         Manual
                     </NavLink>

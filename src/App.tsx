@@ -3,6 +3,7 @@ import './App.css';
 import { Route, Routes } from 'react-router-dom';
 import AddExpenseForm from './pages/AddExpenseForm';
 import CsvExportPage from './pages/CsvExportPage';
+import StatementPage from './pages/StatementPage';
 import { RoutePath } from './route-path.enum';
 import { MainNavigation } from './components/MainNavigation';
 import { HomeFinanceData } from './model';
@@ -11,7 +12,12 @@ import { useLoadHomeFinanceData } from './google-sheets/useLoadHomeFinanceData';
 
 function App() {
     const [homeFinanceData, setHomeFinanceData] = useState<HomeFinanceData | null>(null);
-    const onDataLoaded = useCallback((data: HomeFinanceData) => setHomeFinanceData(data), [setHomeFinanceData]);
+    const [gapiReady, setGapiReady] = useState(false);
+
+    const onDataLoaded = useCallback((data: HomeFinanceData) => {
+        setHomeFinanceData(data);
+        setGapiReady(true);
+    }, [setHomeFinanceData]);
     const loadData = useLoadHomeFinanceData({ onDataLoaded });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => loadData(), []);
@@ -34,6 +40,7 @@ function App() {
                     <Route path={RoutePath.root} element={<AddExpenseForm />} />
                     <Route path={RoutePath.csv} element={<CsvExportPage />} />
                     <Route path={RoutePath.addExpense} element={<AddExpenseForm />} />
+                    <Route path={RoutePath.statement} element={<StatementPage gapiReady={gapiReady} />} />
                 </Routes>
             </main>
         </HomeFinanceDataContext.Provider >

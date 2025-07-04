@@ -12,3 +12,9 @@
     padding: 0.25rem 0.5rem;
     font-size: .65em;
 }
+
+.no-wrap-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
