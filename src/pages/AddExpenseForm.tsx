@@ -16,7 +16,7 @@ enum ExpenseFormField {
 export function AddExpensePage() {
     const [wasValidate, setWasValidated] = useState<boolean>();
     const [submitting, setSubmitting] = useState<boolean>(false);
-    const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
+    const { homeFinanceData } = useContext(HomeFinanceDataContext);
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
 

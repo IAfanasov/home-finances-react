@@ -116,7 +116,10 @@ export interface HomeFinanceData {
   incomeCategories: CategoryData[];
   expenseCategories: CategoryData[];
   accounts: string[];
-  topExpenseRecords: ResultCsvRow[];
+  expenses: GSExpenseOrIncomeCsvRow[];
+  incomes: GSExpenseOrIncomeCsvRow[];
+  transfers: GSTransferCsvRow[];
+  exchanges: GSExchangeCsvRow[];
 }
 
 export interface CategoryData {
@@ -130,4 +133,36 @@ export interface BankStatementProcessingResult<TCSVRow> {
   transfers: GSTransferCsvRow[];
   empty: TCSVRow[];
   manual: TCSVRow[];
+}
+
+export interface Transaction {
+    date: string;
+    amount: number;
+    currency: string;
+    category?: string;
+    account: string;
+    description: string;
+    type: 'income' | 'expense' | 'transfer-in' | 'transfer-out' | 'exchange';
+    fromAccount?: string; // For transfers
+    toAccount?: string; // For transfers
+    originalAmount?: number; // For exchanges
+    originalCurrency?: string; // For exchanges
+    targetAmount?: number; // For exchanges
+    targetCurrency?: string; // For exchanges
+}
+
+export interface GSExchangeCsvRow {
+  date: string;
+  amount: number;
+  currency: string;
+  account: string;
+  description: string;
+  type: 'exchange';
+  originalAmount?: number;
+  originalCurrency?: string;
+  targetAmount?: number;
+  targetCurrency?: string;
+  id: string;
+  rowIndex: number;
+  duplicate?: boolean;
 }

@@ -7,7 +7,6 @@ import {
 } from '../model';
 import { getCategory } from '../shared/category-utils';
 import { AbnCsvRow } from './model';
-import { isDuplicateRecord } from '../shared/isDuplicateRecord';
 
 export function processAbn(
   csvString: string,
@@ -86,10 +85,6 @@ export function processAbn(
           incomes.push(gsRecord);
         } else {
           gsRecord.id = `abn-expense-${expenses.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-          gsRecord.duplicate = isDuplicateRecord(
-            gsRecord,
-            data.topExpenseRecords,
-          );
           expenses.push(gsRecord);
         }
       }

@@ -15,6 +15,7 @@ import { processRevolut } from '../revolut/revolut';
 import { HomeFinanceDataContext } from '../shared/data-context';
 import { parseTrPdfStatement } from '../tr/tr';
 import { getCategory } from '../shared/category-utils';
+import { isDuplicateExpenseOrIncome, isDuplicateTransfer } from '../shared/isDuplicateRecord';
 
 type TCSVRow = AbnCsvRow | RevolutCsvRow;
 
@@ -26,7 +27,7 @@ function CsvExport() {
   const [emptyRecords, setEmptyRecords] = useState<TCSVRow[]>([]);
   const [manualRecords, setManualRecords] = useState<TCSVRow[]>([]);
   const [transfers, setTransfers] = useState<GSTransferCsvRow[]>([]);
-  const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
+  const { homeFinanceData } = useContext(HomeFinanceDataContext);
 
   useEffect(() => {
     if (!homeFinanceData) {
@@ -122,7 +123,9 @@ function CsvExport() {
 
   const deleteDuplicates = useCallback(() => {
     setExpenses((prev) => prev.filter((x) => !x.duplicate));
-  }, [setExpenses]);
+    setIncomes((prev) => prev.filter((x) => !x.duplicate));
+    setTransfers((prev) => prev.filter((x) => !x.duplicate));
+  }, [setExpenses, setIncomes, setTransfers]);
 
   const onTransformTransferToExpense = useCallback(
     (transfer: GSTransferCsvRow) => {
@@ -166,11 +169,11 @@ function CsvExport() {
         } else {
           result = await parseTrPdfStatement(content, homeFinanceData!);
         }
-        setExpenses(result.expenses);
-        setIncomes(result.incomes);
+        setExpenses(result.expenses.map(e => ({...e, duplicate: isDuplicateExpenseOrIncome(e, homeFinanceData?.expenses || [])})));
+        setIncomes(result.incomes.map(i => ({...i, duplicate: isDuplicateExpenseOrIncome(i, homeFinanceData?.incomes || [])})));
+        setTransfers(result.transfers.map(t => ({...t, duplicate: isDuplicateTransfer(t, homeFinanceData?.transfers || [])})));
         setEmptyRecords(result.empty);
         setManualRecords(result.manual);
-        setTransfers(result.transfers);
         setIsSucceed(true);
         setParseError(null);
       } catch (error) {

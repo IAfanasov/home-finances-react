@@ -1,26 +1,107 @@
-import React, { useContext, useState } from 'react';
-import { StatementDataEntry, useLoadStatementData } from '../google-sheets/useLoadStatementData';
+import React, { useContext, useState, useMemo } from 'react';
 import { HomeFinanceDataContext } from '../shared/data-context';
+import { Transaction } from '../model';
 
 interface StatementPageProps {
     gapiReady: boolean;
 }
 
 export function StatementPage({ gapiReady }: StatementPageProps) {
-    const { data: homeFinanceData } = useContext(HomeFinanceDataContext);
+    const { homeFinanceData, loading, loadData } = useContext(HomeFinanceDataContext);
     const [selectedAccount, setSelectedAccount] = useState<string>(homeFinanceData?.accounts[0] || '');
     const today = new Date();
     const initialMonth = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
     const [selectedMonth, setSelectedMonth] = useState<string>(initialMonth);
 
-    const { data, loading, loadData } = useLoadStatementData(gapiReady);
+    const allData = useMemo(() => {
+        if (!homeFinanceData) {
+            return [];
+        }
+        const { expenses, incomes, transfers, exchanges } = homeFinanceData;
+        // Convert specific types to generic Transaction for unified processing
+        const allTransactions: Transaction[] = [
+            ...expenses.map(e => ({
+                date: e.date,
+                amount: e.amount,
+                currency: e.currency,
+                category: e.category,
+                account: e.account,
+                description: e.description || '',
+                type: 'expense' as 'expense',
+            })),
+            ...incomes.map(i => ({
+                date: i.date,
+                amount: i.amount,
+                currency: i.currency,
+                category: i.category,
+                account: i.account,
+                description: i.description || '',
+                type: 'income' as 'income',
+            })),
+            ...transfers.flatMap(t => [
+                {
+                    date: t.date,
+                    amount: -t.amount,
+                    currency: t.currency,
+                    account: t.fromAccount,
+                    description: t.description || '',
+                    type: 'transfer-out' as 'transfer-out',
+                    fromAccount: t.fromAccount,
+                    toAccount: t.toAccount,
+                },
+                {
+                    date: t.date,
+                    amount: t.amount,
+                    currency: t.currency,
+                    account: t.toAccount,
+                    description: t.description || '',
+                    type: 'transfer-in' as 'transfer-in',
+                    fromAccount: t.fromAccount,
+                    toAccount: t.toAccount,
+                },
+            ]),
+            ...exchanges.flatMap(e => [
+                {
+                    date: e.date,
+                    amount: -e.originalAmount!,
+                    currency: e.originalCurrency!,
+                    account: e.account,
+                    description: e.description || `Exchange: Sold ${e.originalAmount} ${e.originalCurrency} for ${e.targetAmount} ${e.targetCurrency}`,
+                    type: 'exchange' as 'exchange',
+                    originalAmount: e.originalAmount,
+                    originalCurrency: e.originalCurrency,
+                    targetAmount: e.targetAmount,
+                    targetCurrency: e.targetCurrency,
+                },
+                {
+                    date: e.date,
+                    amount: e.targetAmount!,
+                    currency: e.targetCurrency!,
+                    account: e.account,
+                    description: e.description || `Exchange: Bought ${e.targetAmount} ${e.targetCurrency} with ${e.originalAmount} ${e.originalCurrency}`,
+                    type: 'exchange' as 'exchange',
+                    originalAmount: e.originalAmount,
+                    originalCurrency: e.originalCurrency,
+                    targetAmount: e.targetAmount,
+                    targetCurrency: e.targetCurrency,
+                },
+            ]),
+        ];
 
-    const filteredData = data?.filter(record => {
+        return allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [homeFinanceData]);
+
+    const filteredData = allData?.filter(record => {
         const [year, month] = selectedMonth.split('-').map(Number);
         const recordDate = new Date(record.date);
         
+        const isAccountMatch = selectedAccount === '' || 
+                               (record.account === selectedAccount) ||
+                               (record.type === 'transfer-in' && record.toAccount === selectedAccount) ||
+                               (record.type === 'transfer-out' && record.fromAccount === selectedAccount);
+
         return (
-            (selectedAccount === '' || record.account === selectedAccount) &&
+            isAccountMatch &&
             recordDate.getFullYear() === year &&
             recordDate.getMonth() === (month - 1)
         );
@@ -50,8 +131,13 @@ export function StatementPage({ gapiReady }: StatementPageProps) {
         firstDayOfMonth.setHours(0, 0, 0, 0);
         lastDayOfMonth.setHours(0, 0, 0, 0);
 
-        data?.forEach(record => {
-            if (selectedAccount !== '' && record.account !== selectedAccount) {
+        allData?.forEach(record => {
+            const isAccountMatch = selectedAccount === '' || 
+                                   (record.account === selectedAccount) ||
+                                   (record.type === 'transfer-in' && record.toAccount === selectedAccount) ||
+                                   (record.type === 'transfer-out' && record.fromAccount === selectedAccount);
+
+            if (!isAccountMatch) {
                 return;
             }
 
@@ -86,7 +172,7 @@ export function StatementPage({ gapiReady }: StatementPageProps) {
         return months;
     };
 
-    const getTransactionKind = (row: StatementDataEntry) => {
+    const getTransactionKind = (row: Transaction) => {
         switch (row.type) {
             case 'expense':
                 return { icon: 'bi-dash-circle', text: '', color: 'text-danger' };

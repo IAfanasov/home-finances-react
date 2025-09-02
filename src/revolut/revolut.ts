@@ -7,7 +7,6 @@ import {
   RevolutCsvRow,
 } from '../model';
 import { getCategory } from '../shared/category-utils';
-import { isDuplicateRecord } from '../shared/isDuplicateRecord';
 
 export function processRevolut(
   csvString: string,
@@ -54,10 +53,6 @@ export function processRevolut(
           description,
           rowIndex: revolutRecord.rowIndex,
         };
-        gsRecord.duplicate = isDuplicateRecord(
-          gsRecord,
-          data.topExpenseRecords,
-        );
         expenses.push(gsRecord);
         continue;
       }
@@ -155,10 +150,6 @@ export function processRevolut(
           description: `Fee for ${description}`,
           rowIndex: revolutRecord.rowIndex,
         };
-        gsFeeRecord.duplicate = isDuplicateRecord(
-          gsFeeRecord,
-          data.topExpenseRecords,
-        );
         expenses.push(gsFeeRecord);
       }
 
@@ -174,10 +165,6 @@ export function processRevolut(
         }
       } else {
         gsRecord.id = `revolut-expense-${expenses.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-        gsRecord.duplicate = isDuplicateRecord(
-          gsRecord,
-          data.topExpenseRecords,
-        );
         expenses.push(gsRecord);
       }
     }

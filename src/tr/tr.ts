@@ -5,7 +5,6 @@ import {
 } from '../model';
 import * as pdfjsLib from 'pdfjs-dist';
 import { getCategory } from '../shared/category-utils';
-import { isDuplicateRecord } from '../shared/isDuplicateRecord';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -182,10 +181,6 @@ export const parseTrPdfStatement = async (
           category: getCategory({ amount: -transaction.amount, description: transaction.description }, data),
           rowIndex: rowIndex++
         });
-        
-        // Check for duplicates
-        const lastExpense = expenses[expenses.length - 1];
-        lastExpense.duplicate = isDuplicateRecord(lastExpense, data.topExpenseRecords);
       }
 
       // Skip the next line since we've already processed it

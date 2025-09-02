@@ -21,6 +21,11 @@ export const MainNavigation = memo(() => (
                         Manual
                     </NavLink>
                 </li>
+                <li>
+                    <NavLink className="nav-link" to={RoutePath.runningBalance}>
+                        Running Balance
+                    </NavLink>
+                </li>
             </ul>
         </div>
     </nav>

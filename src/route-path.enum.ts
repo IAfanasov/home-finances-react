@@ -3,4 +3,5 @@ export enum RoutePath {
     csv='/csv',
     addExpense = '/add-expense',
     statement = '/statement',
+    runningBalance = '/running-balance',
 }
