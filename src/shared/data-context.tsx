@@ -132,13 +132,13 @@ export const HomeFinanceDataContextProvider = ({ children, gapiReady, authError 
             loadArrayFromSpreadsheet('Transfer!A:F'),
             loadArrayFromSpreadsheet('Exchange!A:G'),
             loadArrayFromSpreadsheet('Expense category!A:D'),
-            loadArrayFromSpreadsheet('Account!A:A'),
+            loadArrayFromSpreadsheet('Account!B:B'),
             loadArrayFromSpreadsheet('Income category!A:D'),
             loadArrayFromSpreadsheet('Currency!B:B'),
         ]);
 
         setHomeFinanceData({
-            accounts: accountsValues.flat(),
+            accounts: accountsValues.flat().slice(1).filter(account => account && account.trim()),
             incomeCategories: extractCategories(incomeCategoriesValues).sort((a, b) => a.name > b.name ? 1 : -1),
             expenseCategories: extractCategories(categoriesValues).sort((a, b) => a.name > b.name ? 1 : -1),
             currencies: currenciesValues.flat(),
