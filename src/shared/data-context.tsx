@@ -5,14 +5,16 @@ const defaultValue: {
     homeFinanceData: HomeFinanceData | null,
     loadData: () => Promise<void>,
     loading: boolean,
+    authError: string,
 } = {
     homeFinanceData: null,
     loadData: async () => {},
     loading: true,
+    authError: '',
 };
 export const HomeFinanceDataContext = React.createContext(defaultValue);
 
-export const HomeFinanceDataContextProvider = ({ children, gapiReady }: { children: React.ReactNode, gapiReady: boolean }) => {
+export const HomeFinanceDataContextProvider = ({ children, gapiReady, authError }: { children: React.ReactNode, gapiReady: boolean, authError?: string }) => {
     const [homeFinanceData, setHomeFinanceData] = useState<HomeFinanceData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -156,7 +158,7 @@ export const HomeFinanceDataContextProvider = ({ children, gapiReady }: { childr
     }, [gapiReady, loadData]);
     
     return (
-        <HomeFinanceDataContext.Provider value={{ homeFinanceData, loadData, loading }}>
+        <HomeFinanceDataContext.Provider value={{ homeFinanceData, loadData, loading, authError: authError || '' }}>
             {children}
         </HomeFinanceDataContext.Provider>
     );
