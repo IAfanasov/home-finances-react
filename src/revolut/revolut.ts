@@ -25,8 +25,9 @@ export function processRevolut(
     for (const revolutRecord of records) {
       const amount = +revolutRecord.amount;
       const { description, recordType } = revolutRecord;
-      
-      if (recordType === 'ATM') {
+      const recordTypeUpper = recordType.toUpperCase();
+
+      if (recordTypeUpper === 'ATM') {
         const transferRecord: GSTransferCsvRow = {
           id: `revolut-transfer-${transfers.length.toString()}`,
           amount: Math.abs(amount),
@@ -42,7 +43,7 @@ export function processRevolut(
         continue;
       }
       
-      if (recordType === 'TRANSFER' && description.toLowerCase().indexOf('tikkie') >= 0) {
+      if (recordTypeUpper === 'TRANSFER' && description.toLowerCase().indexOf('tikkie') >= 0) {
         const gsRecord: GSExpenseOrIncomeCsvRow = {
           id: `revolut-expense-${expenses.length.toString()}`,
           amount: Math.abs(amount),
@@ -57,7 +58,7 @@ export function processRevolut(
         continue;
       }
       
-      if (recordType === 'TRANSFER' && description.indexOf('Transfer from Revolut user') >= 0) {
+      if (recordTypeUpper === 'TRANSFER' && description.indexOf('Transfer from Revolut user') >= 0) {
         const transferRecord: GSTransferCsvRow = {
           id: `revolut-transfer-${transfers.length.toString()}`,
           amount: Math.abs(amount),
@@ -73,7 +74,7 @@ export function processRevolut(
         continue;
       }
       
-      if (recordType === 'TRANSFER') {
+      if (recordTypeUpper === 'TRANSFER') {
         let fromAccount = 'Revolut';
         let toAccount = '';
 
@@ -104,7 +105,7 @@ export function processRevolut(
         continue;
       }
       
-      if (recordType === 'TOPUP' && description === 'Payment from I Afanasov Cj') {
+      if (recordTypeUpper === 'TOPUP' && description === 'Payment from I Afanasov Cj') {
         const transferRecord: GSTransferCsvRow = {
           id: `revolut-transfer-${transfers.length.toString()}`,
           amount: Math.abs(amount),
@@ -156,7 +157,7 @@ export function processRevolut(
       if (amount > 0) {
         if (
           description.indexOf('Balance migration to another') >= 0 ||
-          recordType === 'CASHBACK'
+          recordTypeUpper === 'CASHBACK'
         ) {
           // TODO transfer
         } else {
