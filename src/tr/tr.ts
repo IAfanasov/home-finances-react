@@ -197,15 +197,14 @@ const getMonthFromAbbr = (abbr: string) => {
   const months: { [m: string]: string } = {
     'jan.': '01', 'jan': '01',
     'feb.': '02', 'feb': '02',
-    'mrt.': '03', 'mrt': '03',
+    'mrt.': '03', 'mrt': '03', 'mar.': '03', 'mar': '03',
     'apr.': '04', 'apr': '04',
-    'mei': '05',
-    'may.': '05', 'may': '05',
+    'mei': '05', 'may.': '05', 'may': '05',
     'jun.': '06', 'jun': '06',
     'jul.': '07', 'jul': '07',
     'aug.': '08', 'aug': '08',
     'sep.': '09', 'sep': '09',
-    'okt.': '10', 'okt': '10',
+    'okt.': '10', 'okt': '10', 'oct.': '10', 'oct': '10',
     'nov.': '11', 'nov': '11',
     'dec.': '12', 'dec': '12',
   };
