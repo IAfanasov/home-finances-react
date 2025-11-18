@@ -26,23 +26,28 @@ export function processAbn(
       const amount = +abnRecord.amount.replace(',', '.');
       const { description } = abnRecord;
 
+      // Skip transfers in savings account (122234367) that reference main account
+      // to avoid duplicates - these are already recorded from main account perspective
       if (
-        description.indexOf('LT913250033728930193') >= 0 ||
-        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL13REVO2122588111/BIC/REVONL22XXX /NAME/Igor Afanasov/REMI/Sent from Revolut/EREF/NOTPROVIDED') >= 0
+        abnRecord.accountNumber === '122234367' &&
+        description.indexOf('NL86ABNA0832863904') >= 0
       ) {
+        continue;
+      }
+
+      if (description.indexOf('LT913250033728930193') >= 0) {
         manual.push(abnRecord);
         continue;
       }
 
-      if (
-        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL79ABNA0122234367/BIC/ABNANL2A/NAME/Direct Savings/EREF/NOTPROVIDED') >= 0
-      ) {
+      // Detect transfers between ABN and Revolut based on Revolut IBAN
+      if (description.indexOf('NL13REVO2122588111') >= 0) {
         transfers.push({
           id: `abn-transfer-${transfers.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           amount: Math.abs(amount),
           currency: abnRecord.mutationcode,
-          fromAccount: 'ABN',
-          toAccount: 'ABN saving',
+          fromAccount: amount > 0 ? 'Revolut' : 'ABN',
+          toAccount: amount > 0 ? 'ABN' : 'Revolut',
           date: toDashedDate(abnRecord.transactiondate),
           description,
           rowIndex: abnRecord.rowIndex,
@@ -50,31 +55,43 @@ export function processAbn(
         continue;
       }
 
-      if (
-        description.indexOf('/TRTP/SEPA OVERBOEKING/IBAN/NL79ABNA0122234367/BIC/ABNANL2A/NAME/I AFANASOV CJ/EREF/NOTPROVIDED') >= 0
-      ) {
-        transfers.push({
-          id: `abn-transfer-${transfers.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-          amount: Math.abs(amount),
-          currency: abnRecord.mutationcode,
-          fromAccount: 'ABN saving',
-          toAccount: 'ABN',
-          date: toDashedDate(abnRecord.transactiondate),
-          description,
-          rowIndex: abnRecord.rowIndex,
-        });
-        continue;
+      // Detect transfers between ABN and ABN saving based on savings account IBAN
+      if (description.indexOf('NL79ABNA0122234367') >= 0) {
+        const isToSavings = description.indexOf('Direct Savings') >= 0;
+        const isFromSavings = description.indexOf('I AFANASOV CJ') >= 0;
+
+        if (isToSavings || isFromSavings) {
+          transfers.push({
+            id: `abn-transfer-${transfers.length.toString()}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+            amount: Math.abs(amount),
+            currency: abnRecord.mutationcode,
+            fromAccount: isFromSavings ? 'ABN saving' : 'ABN',
+            toAccount: isFromSavings ? 'ABN' : 'ABN saving',
+            date: toDashedDate(abnRecord.transactiondate),
+            description,
+            rowIndex: abnRecord.rowIndex,
+          });
+          continue;
+        }
       }
 
       if (amount === 0) {
         empty.push(abnRecord);
       } else {
+        // Determine category
+        let category = getCategory({ amount, description }, data);
+
+        // Auto-assign "bank interest" category for income with "interest" in description
+        if (amount > 0 && description.toLowerCase().indexOf('interest') >= 0) {
+          category = 'bank interest';
+        }
+
         const gsRecord: GSExpenseOrIncomeCsvRow = {
           id: 'temp',
           amount: Math.abs(amount),
           currency: abnRecord.mutationcode,
           account: 'ABN',
-          category: getCategory({ amount, description }, data),
+          category,
           date: toDashedDate(abnRecord.transactiondate),
           description,
           rowIndex: abnRecord.rowIndex,
